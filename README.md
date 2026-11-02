@@ -4,11 +4,11 @@
 ### Autonomous Multi-Agent Pedagogical Engine for Democratized & Neuro-Inclusive STEM Education
 
 [![AWS Strands Agents SDK](https://img.shields.io/badge/Built%20With-AWS%20Strands%20Agents%20SDK-FF9900?logo=amazon-aws&logoColor=white)](https://catalog.us-east-1.prod.workshops.aws/workshops/083b80d7-5a90-402b-9bb4-19fb53092808)
-[![Test Suite](https://img.shields.io/badge/Test%20Suite-284%2F284%20Passed%20(100%25)-00C853?logo=pytest&logoColor=white)](file:///home/dev/Music/LuminaLab%20Swarm%20(2)/tests/)
+[![Test Suite](https://img.shields.io/badge/Test%20Suite-284%2F284%20Passed%20(100%25)-00C853?logo=pytest&logoColor=white)](tests/)
 [![Python 3.12](https://img.shields.io/badge/Python-3.12%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
-[![Architecture: Serverless](https://img.shields.io/badge/AWS%20Cloud-Bedrock%20%7C%20Polly%20%7C%20DynamoDB%20%7C%20S3-232F3E?logo=amazon-aws&logoColor=white)](file:///home/dev/Music/LuminaLab%20Swarm%20(2)/src/build_iac/)
-[![Video Demo](https://img.shields.io/badge/YouTube-Watch%20Demo%20Video%20(%3C3m)-FF0000?logo=youtube&logoColor=white)](#)
+[![Architecture: Serverless](https://img.shields.io/badge/AWS%20Cloud-Bedrock%20%7C%20Polly%20%7C%20DynamoDB%20%7C%20S3-232F3E?logo=amazon-aws&logoColor=white)](src/build_iac/)
+[![Video Demo](https://img.shields.io/badge/YouTube-Watch%20Demo%20Video%20(%3C3m)-FF0000?logo=youtube&logoColor=white)](https://youtu.be/WM_fD0tWd98?si=zJWAUhHRpmG7j6OI)
 [![Builder Center Article](https://img.shields.io/badge/AWS%20Builder%20Center-Read%20Project%20Article-232F3E?logo=amazon-aws&logoColor=white)](#)
 
 <p align="center">
@@ -25,10 +25,10 @@ This repository is an official submission for the **AWS Strands SDK: Workshop to
 
 | Evaluation Criterion (Weight) | What LuminaLab Swarm Delivers | Code & Evidence Links |
 | :--- | :--- | :--- |
-| **Social Impact (25%)** | **Neuro-Inclusion & Equity:** Micro-dosed tactile loops for **ADHD**, high-contrast OpenDyslexic typography + Amazon Polly Neural voice (`Hala`/`Joanna`) for **Dyslexia & Low-Vision**, and ultra-portable (&lt;50 KB) zero-dependency micro-labs for **bandwidth-starved remote schools**. | • [1. Human-Centered Mission](#1-human-centered-mission-social-impact)<br>• [Offline Parity Engine](file:///home/dev/Music/LuminaLab%20Swarm%20(2)/src/ui/js/offline/standalone_builder.js)<br>• [Pedagogical Calibration](file:///home/dev/Music/LuminaLab%20Swarm%20(2)/src/swarm/pedagogical_calibration.py) |
-| **Technical Execution (25%)** | **Multi-Agent Orchestration:** 6 specialized agents coordinated across 3 sequential and concurrent pairs using the **AWS Strands Agents SDK**. Robust thread-pool concurrency, strict Pydantic v2 data contracts, and **284 automated tests passing at 100%**. | • [2. Multi-Agent Swarm Architecture](#2-multi-agent-swarm-architecture)<br>• [Swarm Pipeline Source](file:///home/dev/Music/LuminaLab%20Swarm%20(2)/src/swarm/)<br>• [284/284 Test Suite](file:///home/dev/Music/LuminaLab%20Swarm%20(2)/tests/) |
-| **Originality (25%)** | **Generative Simulation Math & Automated IaC:** Pure vanilla HTML5/Canvas generation (zero runtime frameworks or CDNs), automated DynamoDB Pay-Per-Request audit ledger, S3 Vault, and a **1-command CloudFormation provisioner** (`deploy.py`) with 45s deploy, 15s teardown, and 0.9s idempotency. | • [3. Simulation Engines](file:///home/dev/Music/LuminaLab%20Swarm%20(2)/src/engines/)<br>• [4. Enterprise AWS Cloud & IaC](#4-enterprise-aws-cloud-integration--one-click-iac)<br>• [One-Click Cloud Provisioner](file:///home/dev/Music/LuminaLab%20Swarm%20(2)/src/build_iac/deploy.py) |
-| **Communication Quality (25%)** | **Bilingual Empathy & Engineering Rigor:** 60-second local quickstart, interactive Mermaid diagrams, live terminal logs streaming, clear enterprise IaC documentation, and a cohesive demo video under 3 minutes. | • [5. Quickstart Guide](#5-rapid-developer--judge-quickstart)<br>• [Live Terminal Trace](file:///home/dev/Music/LuminaLab%20Swarm%20(2)/src/swarm/terminal_stream.py)<br>• [IaC Guide](file:///home/dev/Music/LuminaLab%20Swarm%20(2)/src/build_iac/README.md) |
+| **Social Impact (25%)** | **Neuro-Inclusion & Equity:** Micro-dosed tactile loops for **ADHD**, high-contrast OpenDyslexic typography + Amazon Polly Neural voice (`Hala`/`Joanna`) for **Dyslexia & Low-Vision**, and ultra-portable (&lt;50 KB) zero-dependency micro-labs for **bandwidth-starved remote schools**. | • [1. Human-Centered Mission](#1-human-centered-mission-social-impact)<br>• [Offline Parity Engine](src/ui/js/offline/standalone_builder.js)<br>• [Pedagogical Calibration](src/swarm/pedagogical_calibration.py) |
+| **Technical Execution (25%)** | **Multi-Agent Orchestration:** 6 specialized agents coordinated across 3 sequential and concurrent pairs using the **AWS Strands Agents SDK**. Robust thread-pool concurrency, strict Pydantic v2 data contracts, and **284 automated tests passing at 100%**. | • [2. Multi-Agent Swarm Architecture](#2-multi-agent-swarm-architecture)<br>• [Swarm Pipeline Source](src/swarm/)<br>• [284/284 Test Suite](tests/) |
+| **Originality (25%)** | **Generative Simulation Math & Automated IaC:** Pure vanilla HTML5/Canvas generation (zero runtime frameworks or CDNs), automated DynamoDB Pay-Per-Request audit ledger, S3 Vault, and a **1-command CloudFormation provisioner** (`deploy.py`) with 45s deploy, 15s teardown, and 0.9s idempotency. | • [3. Simulation Engines](src/engines/)<br>• [4. Enterprise AWS Cloud & IaC](#4-enterprise-aws-cloud-integration--one-click-iac)<br>• [One-Click Cloud Provisioner](src/build_iac/deploy.py) |
+| **Communication Quality (25%)** | **Bilingual Empathy & Engineering Rigor:** 60-second local quickstart, interactive Mermaid diagrams, live terminal logs streaming, clear enterprise IaC documentation, and a cohesive demo video under 3 minutes. | • [5. Quickstart Guide](#5-rapid-developer--judge-quickstart)<br>• [Watch Demo Video](https://youtu.be/WM_fD0tWd98?si=zJWAUhHRpmG7j6OI)<br>• [GitHub Repository](https://github.com/Tt140/Lumina)<br>• [IaC Guide](src/build_iac/README.md) |
 
 ---
 
@@ -228,8 +228,8 @@ Experience LuminaLab Swarm locally in under 60 seconds:
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/your-username/luminalab-swarm.git
-cd "luminalab-swarm"
+git clone https://github.com/Tt140/Lumina.git
+cd Lumina
 
 # 2. Install dependencies
 pip install -r requirements.txt
@@ -256,9 +256,9 @@ This project complies 100% with all official Hackathon Terms & Conditions:
 
 - [x] **Built with Strands Agents SDK:** Multi-agent pipeline orchestrated with the Strands SDK and Amazon Bedrock (`src/swarm/`).
 - [x] **Measurable Social Good (Education & Inclusion):** Solves STEM exclusion for ADHD, Dyslexia, and bandwidth-starved rural schools.
-- [x] **Public Code Repository:** Hosted publicly under an OSI-approved license.
+- [x] **Public Code Repository:** Hosted publicly at [GitHub: Tt140/Lumina](https://github.com/Tt140/Lumina).
 - [x] **Approved OSI Open Source License:** Licensed under the [Apache License, Version 2.0](LICENSE).
-- [x] **Public Demo Video (<3 Minutes):** Highlighting the live agent swarm, offline micro-labs, and cloud teardown.
+- [x] **Public Demo Video (<3 Minutes):** Highlighting the live agent swarm, offline micro-labs, and cloud teardown. [Watch Demo on YouTube](https://youtu.be/WM_fD0tWd98?si=zJWAUhHRpmG7j6OI).
 - [x] **AWS Builder Center Project Article:** Comprehensive technical deep dive published on Builder Center.
 - [x] **Free-Tier & Serverless Compliant:** $0.00 idle cost via AWS S3, DynamoDB `PAY_PER_REQUEST`, and Polly.
 

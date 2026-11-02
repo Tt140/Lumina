@@ -1,0 +1,92 @@
+/* ============================================================
+   LuminaLab Swarm — Enterprise Institutional Design System
+   Workflow Navigation + Dual-Workspace Architecture
+   Palette: Pure White (#FFFFFF), Slate (50-900), Emerald Green (#16A34A)
+   ============================================================ */
+
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap");
+
+:root {
+  --canvas:         #FFFFFF;
+  --surface-subtle: #F8FAFC;
+  --surface-card:   #FFFFFF;
+  --border-subtle:  #F1F5F9;
+  --border-default: #E2E8F0;
+  --border-strong:  #CBD5E1;
+  --border-focus:   #94A3B8;
+
+  --text-primary:   #0F172A; /* Slate 900 */
+  --text-secondary: #475569; /* Slate 600 */
+  --text-muted:     #64748B; /* Slate 500 */
+  --text-tertiary:  #94A3B8; /* Slate 400 */
+
+  --green-500:      #22C55E;
+  --green-600:      #16A34A;
+  --green-700:      #15803D;
+  --green-800:      #166534;
+  --green-50:       #F0FDF4;
+  --green-100:      #DCFCE7;
+
+  --blue-600:       #0284C7;
+  --blue-50:        #F0F9FF;
+  --blue-100:       #E0F2FE;
+
+  --amber-600:      #D97706;
+  --amber-50:       #FFFBEB;
+  --amber-100:      #FEF3C7;
+
+  --slate-900:      #0F172A;
+  --slate-800:      #1E293B;
+  --slate-700:      #334155;
+  --slate-100:      #F1F5F9;
+  --slate-50:       #F8FAFC;
+
+  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+  --radius-sm:   6px;
+  --radius-md:   10px;
+  --radius-lg:   14px;
+  --radius-xl:   20px;
+  --radius-full: 9999px;
+
+  --shadow-xs: 0 1px 2px 0 rgba(0, 0, 0, 0.04);
+  --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.06), 0 1px 2px 0 rgba(0, 0, 0, 0.03);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.06), 0 2px 4px -1px rgba(0, 0, 0, 0.04);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.04);
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-family: var(--font-sans);
+  background-color: var(--canvas);
+  color: var(--text-primary);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: #FFFFFF;
+}
+
+/* Subtle ambient backdrop */
+.ambient-glow {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 380px;
+  background: radial-gradient(circle at 50% -20%, rgba(34, 197, 94, 0.04) 0%, rgba(255, 255, 255, 0) 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+

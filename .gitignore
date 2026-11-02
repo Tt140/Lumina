@@ -1,0 +1,25 @@
+# Environment & Secrets (NEVER COMMIT)
+.env
+.env.*
+!.env.example
+*.backup.*
+
+# Python Cache & Bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Local Temporary / Media Storage
+_mock_storage/
+*.mp4
+*.mp3
+
+# IDEs & System Files
+.DS_Store
+.idea/
+.vscode/
+*.swp

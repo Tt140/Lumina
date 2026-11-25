@@ -1,10 +1,12 @@
 """LuminaLab Swarm - Main Swarm Orchestrator (Concurrent Multi-Agent Pipeline)."""
 
+import json
 import logging
 import time
 import uuid
 from concurrent.futures import ThreadPoolExecutor
 from typing import Any
+from src.config import get_config
 from src.contracts.schemas import LessonInput, LuminaResponse
 from src.swarm.model_factory import get_model
 from src.swarm.pair1_deconstruct import run_pair1
@@ -25,10 +27,57 @@ class LuminaSwarmOrchestrator:
     Finally persists artifacts to AWS DynamoDB & S3/Polly (or local mock fallback).
     """
 
-    def __init__(self, model=None):
+    def __init__(
+        self,
+        model=None,
+        cloudwatch_client: Any = None,
+        emit_cloudwatch_metrics: bool | None = None,
+    ):
         self.model = model or get_model()
         self.dynamo_ledger = DynamoImpactLedger()
         self.s3_polly_service = S3PollyService()
+        self._cloudwatch_client = cloudwatch_client
+        self._emit_cloudwatch_metrics = emit_cloudwatch_metrics
+
+    def _emit_dynamo_fallback_metric(self, outcome: str) -> None:
+        """Emit custom CloudWatch metric when enabled, never breaking the learning pipeline."""
+        cfg = get_config()
+        enabled = (
+            self._emit_cloudwatch_metrics
+            if self._emit_cloudwatch_metrics is not None
+            else getattr(cfg, "CLOUDWATCH_METRICS_ENABLED", False)
+        )
+        if not enabled or getattr(self.dynamo_ledger, "mock_mode", True):
+            return
+
+        try:
+            cw = self._cloudwatch_client
+            if cw is None:
+                import boto3
+                cw = boto3.client("cloudwatch", region_name=cfg.AWS_REGION)
+                self._cloudwatch_client = cw
+            cw.put_metric_data(
+                Namespace=getattr(cfg, "CLOUDWATCH_NAMESPACE", "LuminaLab/Swarm"),
+                MetricData=[
+                    {
+                        "MetricName": "DynamoFallbackCount",
+                        "Dimensions": [
+                            {"Name": "Component", "Value": "DynamoImpactLedger"},
+                        ],
+                        "Value": 1.0,
+                        "Unit": "Count",
+                    }
+                ],
+            )
+        except Exception as metric_exc:
+            logger.warning(
+                json.dumps({
+                    "event": "cloudwatch_metric_emit_failed",
+                    "metric": "DynamoFallbackCount",
+                    "outcome": outcome,
+                    "error": str(metric_exc),
+                })
+            )
 
     def _run_parallel_pairs(self, deconstructed):
         """Executes Pair 2 and Pair 3 concurrently using ThreadPoolExecutor."""
@@ -150,10 +199,41 @@ class LuminaSwarmOrchestrator:
                 receipt = {}
                 try:
                     receipt = self.dynamo_ledger.record_impact(response.impact, session_id=session_id)
-                    if receipt.get("status") not in ("recorded", "recorded_local_fallback"):
+                    receipt_status = receipt.get("status")
+                    if receipt_status == "recorded":
+                        status = "success"
+                    elif receipt_status == "recorded_local_fallback":
+                        status = "degraded"
+                        logger.warning(
+                            json.dumps({
+                                "event": "dynamo_persistence_degraded",
+                                "session_id": session_id,
+                                "table_name": receipt.get("table_name", ""),
+                                "receipt_status": receipt_status,
+                                "error": receipt.get("error", ""),
+                            })
+                        )
+                        self._emit_dynamo_fallback_metric("degraded")
+                    else:
                         status = "failed"
-                except Exception:
+                        logger.warning(
+                            json.dumps({
+                                "event": "dynamo_persistence_unexpected_status",
+                                "session_id": session_id,
+                                "receipt_status": receipt_status,
+                            })
+                        )
+                        self._emit_dynamo_fallback_metric("failed")
+                except Exception as exc:
                     status = "failed"
+                    logger.warning(
+                        json.dumps({
+                            "event": "dynamo_persistence_exception",
+                            "session_id": session_id,
+                            "error": str(exc),
+                        })
+                    )
+                    self._emit_dynamo_fallback_metric("failed")
                 dur = max(1, int((time.time() - t0) * 1000))
                 return receipt, status, dur
 

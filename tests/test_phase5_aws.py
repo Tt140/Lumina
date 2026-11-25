@@ -300,3 +300,203 @@ def test_orchestrator_trace_includes_aws(sample_lesson_input):
     assert s3_trace["status"] == "success"
     assert dynamo_trace["duration_ms"] >= 1
     assert s3_trace["duration_ms"] >= 1
+
+
+# ============================================================================
+# 5. F-05 Architectural Remediation Tests (Timeouts, O(1) Atomic Stats, Degraded Trace)
+# ============================================================================
+
+@pytest.fixture
+def live_config_mode(monkeypatch):
+    """Temporarily enable non-mock config mode and cleanly restore singleton afterward."""
+    monkeypatch.setenv("LUMINA_MOCK_MODE", "false")
+    monkeypatch.setenv("AWS_REGION", "us-east-1")
+    monkeypatch.setenv("DYNAMO_TABLE_NAME", "test-impact-table")
+    monkeypatch.setenv("CLOUDWATCH_METRICS_ENABLED", "false")
+    get_config(reload=True)
+    yield
+    monkeypatch.setenv("LUMINA_MOCK_MODE", "true")
+    monkeypatch.setenv("CLOUDWATCH_METRICS_ENABLED", "false")
+    get_config(reload=True)
+
+
+def test_dynamo_client_uses_production_timeouts_and_retries(live_config_mode):
+    """Verify F-05A: boto3 client config uses 2.0s connect, 5.0s read, standard retries=3."""
+    ledger = DynamoImpactLedger()
+    assert ledger.mock_mode is False
+    cfg = ledger.client.meta.config
+    assert cfg.connect_timeout == 2.0
+    assert cfg.read_timeout == 5.0
+    assert cfg.retries.get("mode") == "standard"
+    assert cfg.retries.get("total_max_attempts") == 3
+
+
+def test_record_impact_uses_idempotent_transact_write_and_prevents_double_count(
+    live_config_mode, sample_metrics, caplog
+):
+    """Verify F-05B: record_impact issues TransactWriteItems and avoids double-counting duplicates."""
+    from unittest.mock import MagicMock
+    from botocore.exceptions import ClientError
+
+    mock_client = MagicMock()
+    ledger = DynamoImpactLedger()
+    ledger.client = mock_client
+
+    receipt1 = ledger.record_impact(sample_metrics, session_id="idem-sess-001")
+    assert receipt1["status"] == "recorded"
+    assert mock_client.transact_write_items.call_count == 1
+    mock_client.put_item.assert_not_called()
+
+    tx_items = mock_client.transact_write_items.call_args.kwargs["TransactItems"]
+    assert len(tx_items) == 2
+    assert tx_items[0]["Put"]["ConditionExpression"] == "attribute_not_exists(session_id)"
+    assert tx_items[1]["Update"]["Key"] == {"session_id": {"S": DynamoImpactLedger.AGGREGATE_SESSION_ID}}
+    assert "ADD total_sessions :one" in tx_items[1]["Update"]["UpdateExpression"]
+
+    # Simulate duplicate retry returning TransactionCanceledException(ConditionalCheckFailed)
+    mock_client.transact_write_items.side_effect = ClientError(
+        {
+            "Error": {"Code": "TransactionCanceledException", "Message": "ConditionalCheckFailed"},
+            "CancellationReasons": [{"Code": "ConditionalCheckFailed"}, {"Code": "None"}],
+        },
+        "TransactWriteItems",
+    )
+    with caplog.at_level("INFO", logger="luminalab.dynamo_ledger"):
+        receipt2 = ledger.record_impact(sample_metrics, session_id="idem-sess-001")
+
+    assert receipt2["status"] == "recorded"
+    assert receipt2.get("idempotent_duplicate") is True
+    assert "idem-sess-001" not in ledger._local_store
+    assert any("dynamo_idempotent_duplicate" in r.message for r in caplog.records)
+
+
+def test_record_impact_retries_transient_transaction_conflict(live_config_mode, sample_metrics, monkeypatch):
+    """Verify F-05B: TransactionConflict triggers bounded retry and succeeds cleanly."""
+    from unittest.mock import MagicMock
+    from botocore.exceptions import ClientError
+
+    monkeypatch.setattr("src.aws.dynamo_ledger.time.sleep", lambda _s: None)
+    mock_client = MagicMock()
+    conflict_err = ClientError(
+        {
+            "Error": {"Code": "TransactionCanceledException", "Message": "Conflict"},
+            "CancellationReasons": [{"Code": "None"}, {"Code": "TransactionConflict"}],
+        },
+        "TransactWriteItems",
+    )
+    mock_client.transact_write_items.side_effect = [conflict_err, {}]
+
+    ledger = DynamoImpactLedger()
+    ledger.client = mock_client
+    receipt = ledger.record_impact(sample_metrics, session_id="conflict-sess-01")
+    assert receipt["status"] == "recorded"
+    assert mock_client.transact_write_items.call_count == 2
+
+
+def test_record_impact_mock_mode_is_idempotent(sample_metrics):
+    """Verify mock mode avoids double-counting duplicate session_ids."""
+    ledger = DynamoImpactLedger()
+    ledger.record_impact(sample_metrics, session_id="dup-mock-1")
+    dup_receipt = ledger.record_impact(sample_metrics, session_id="dup-mock-1")
+    assert dup_receipt["status"] == "recorded"
+    assert dup_receipt.get("idempotent_duplicate") is True
+    assert ledger.get_aggregate_stats()["total_sessions"] == 1
+
+
+def test_get_aggregate_stats_uses_get_item_only_and_handles_cold_start(live_config_mode):
+    """Verify F-05B: get_aggregate_stats uses O(1) GetItem, never calls scan(), and handles empty table."""
+    from unittest.mock import MagicMock
+
+    mock_client = MagicMock()
+    mock_client.scan.side_effect = AssertionError("Scan must never be called in get_aggregate_stats()")
+    mock_client.get_item.return_value = {}
+
+    ledger = DynamoImpactLedger()
+    ledger.client = mock_client
+
+    # Cold start: empty table with no AGGREGATE#GLOBAL item yet
+    cold_stats = ledger.get_aggregate_stats()
+    assert cold_stats == {
+        "total_sessions": 0,
+        "avg_grade_reduction": 0.0,
+        "avg_cognitive_load_reduction_pct": 0.0,
+        "avg_lab_size_kb": 0.0,
+        "total_offline_ready_labs": 0,
+        "avg_generation_time_sec": 0.0,
+    }
+    mock_client.get_item.assert_called_once_with(
+        TableName="test-impact-table",
+        Key={"session_id": {"S": "AGGREGATE#GLOBAL"}},
+    )
+    mock_client.scan.assert_not_called()
+
+    # Populated AGGREGATE#GLOBAL item returns exact computed averages in O(1)
+    mock_client.get_item.return_value = {
+        "Item": {
+            "session_id": {"S": "AGGREGATE#GLOBAL"},
+            "total_sessions": {"N": "4"},
+            "sum_grade_reduction": {"N": "18.0"},
+            "sum_cognitive_load_reduction_pct": {"N": "220.0"},
+            "sum_lab_size_kb": {"N": "100.0"},
+            "total_offline_ready_labs": {"N": "3"},
+            "sum_generation_time_sec": {"N": "10.0"},
+        }
+    }
+    stats = ledger.get_aggregate_stats()
+    assert stats == {
+        "total_sessions": 4,
+        "avg_grade_reduction": 4.5,
+        "avg_cognitive_load_reduction_pct": 55.0,
+        "avg_lab_size_kb": 25.0,
+        "total_offline_ready_labs": 3,
+        "avg_generation_time_sec": 2.5,
+    }
+    mock_client.scan.assert_not_called()
+
+
+def test_orchestrator_marks_dynamo_fallback_as_degraded_and_emits_metric(
+    live_config_mode, sample_lesson_input, caplog
+):
+    """Verify F-05A: local fallback never logs 'success'; marks 'degraded', logs warning, and emits metric."""
+    from unittest.mock import MagicMock
+    from botocore.exceptions import ReadTimeoutError
+    from src.swarm.model_factory import MockModel
+
+    mock_ddb = MagicMock()
+    mock_ddb.transact_write_items.side_effect = ReadTimeoutError(
+        endpoint_url="https://dynamodb.us-east-1.amazonaws.com/",
+        error=TimeoutError("Read timeout simulated"),
+    )
+    mock_cw = MagicMock()
+
+    orch = LuminaSwarmOrchestrator(
+        model=MockModel(),
+        cloudwatch_client=mock_cw,
+        emit_cloudwatch_metrics=True,
+    )
+    orch.dynamo_ledger.client = mock_ddb
+    orch.s3_polly_service.mock_mode = True
+    orch.s3_polly_service.bucket_name = "mock_local"
+
+    with caplog.at_level("WARNING", logger="luminalab.orchestrator"):
+        response = orch.run(sample_lesson_input, include_aws=True)
+
+    # Pipeline still succeeds for student while accurately reporting DynamoDB degradation
+    assert response.verified_lab.passed_sandbox_guard is True
+    assert response.dynamo_receipt["status"] == "recorded_local_fallback"
+
+    dynamo_trace = next(e for e in response.swarm_trace if e["agent_name"] == "AWS_DynamoDB")
+    assert dynamo_trace["status"] == "degraded"
+    assert dynamo_trace["status"] != "success"
+
+    assert any("dynamo_persistence_degraded" in r.message for r in caplog.records)
+    mock_cw.put_metric_data.assert_called_once()
+    cw_kwargs = mock_cw.put_metric_data.call_args.kwargs
+    assert cw_kwargs["Namespace"] == "LuminaLab/Swarm"
+    assert cw_kwargs["MetricData"][0]["MetricName"] == "DynamoFallbackCount"
+
+    # Also verify CloudWatch failure never breaks student response
+    mock_cw.put_metric_data.side_effect = RuntimeError("CloudWatch unreachable")
+    response2 = orch.run(sample_lesson_input, include_aws=True)
+    dynamo_trace2 = next(e for e in response2.swarm_trace if e["agent_name"] == "AWS_DynamoDB")
+    assert dynamo_trace2["status"] == "degraded"

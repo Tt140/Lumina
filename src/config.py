@@ -18,9 +18,8 @@ def _parse_bool(val: str | None, default: bool) -> bool:
 def _resolve_model_id() -> str:
     raw = (
         os.getenv("BEDROCK_MODEL_ID")
-        or os.getenv("DEEPSEEK_PRO_MODEL")
-        or os.getenv("INCIDENTS_FLASH_MODEL")
-        or ("deepseek.v3.2" if ("bedrock-mantle" in os.getenv("OPENAI_BASE_URL", "") or os.getenv("DEEPSEEK_API_KEY")) else "us.amazon.nova-pro-v1:0")
+        or os.getenv("LLM_MODEL_ID")
+        or ("mistral.mistral-large-3-675b-instruct" if "bedrock-mantle" in os.getenv("OPENAI_BASE_URL", "") else "us.amazon.nova-pro-v1:0")
     )
     if raw.startswith("bedrock:"):
         return raw.split("bedrock:", 1)[1]
@@ -30,7 +29,6 @@ def _resolve_model_id() -> str:
 def _resolve_api_key() -> str | None:
     return (
         os.getenv("BEDROCK_API_KEY")
-        or os.getenv("DEEPSEEK_API_KEY")
         or os.getenv("AWS_BEARER_TOKEN")
         or os.getenv("OPENAI_API_KEY")
     )
@@ -39,19 +37,10 @@ def _resolve_api_key() -> str | None:
 def _resolve_base_url() -> str | None:
     explicit = (
         os.getenv("OPENAI_BASE_URL")
-        or os.getenv("DEEPSEEK_BASE_URL")
         or os.getenv("LLM_BASE_URL")
     )
     if explicit:
         return explicit.strip()
-
-    # Smart auto-detection based on key signature for native platform keys
-    api_key = _resolve_api_key()
-    if api_key and api_key.startswith("sk-"):
-        model_id = _resolve_model_id()
-        if "deepseek" in model_id.lower():
-            return "https://api.deepseek.com"
-        # Standard OpenAI keys default to official OpenAI endpoint (no base_url override needed)
 
     return None
 
@@ -77,7 +66,7 @@ class LuminaConfig(BaseModel):
         default_factory=lambda: os.getenv("DYNAMO_TABLE_NAME", "luminalab-impact-events")
     )
     S3_BUCKET_NAME: str = Field(
-        default_factory=lambda: os.getenv("S3_BUCKET_NAME", "luminalab-vault-057704056750")
+        default_factory=lambda: os.getenv("S3_BUCKET_NAME", "luminalab-vault")
     )
     MAX_LAB_SIZE_KB: float = Field(
         default_factory=lambda: float(os.getenv("MAX_LAB_SIZE_KB", "200.0"))
@@ -87,6 +76,12 @@ class LuminaConfig(BaseModel):
     )
     POLLY_VOICE_EN: str = Field(
         default_factory=lambda: os.getenv("POLLY_VOICE_EN", "Joanna")
+    )
+    CLOUDWATCH_METRICS_ENABLED: bool = Field(
+        default_factory=lambda: _parse_bool(os.getenv("CLOUDWATCH_METRICS_ENABLED"), False)
+    )
+    CLOUDWATCH_NAMESPACE: str = Field(
+        default_factory=lambda: os.getenv("CLOUDWATCH_NAMESPACE", "LuminaLab/Swarm")
     )
 
 

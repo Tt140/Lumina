@@ -159,7 +159,14 @@ def monitor_stack_events(cf_client: Any, stack_name: str, start_time: datetime.d
         time.sleep(3)
 
 
-def deploy_stack(stack_name: str, region: str, env_file: Path, auto_approve: bool = False, dry_run: bool = False) -> None:
+def deploy_stack(
+    stack_name: str,
+    region: str,
+    env_file: Path,
+    auto_approve: bool = False,
+    dry_run: bool = False,
+    alert_email: str = "",
+) -> None:
     """Execute CloudFormation stack deployment."""
     session = get_boto_session(region_name=region)
     verify_aws_identity(session)
@@ -197,9 +204,12 @@ def deploy_stack(stack_name: str, region: str, env_file: Path, auto_approve: boo
     action_label = "UPDATE" if stack_exists else "CREATE"
     print(f"\n[Execution Plan] Action: {action_label} | Stack: {stack_name} | Region: {region}")
     print("Resources to provision:")
-    print("  1. AWS::S3::Bucket        -> LuminaLabVaultBucket (with Web CORS)")
-    print("  2. AWS::DynamoDB::Table   -> LuminaLabImpactTable (On-Demand PAY_PER_REQUEST)")
-    print("  3. AWS::IAM::ManagedPolicy-> LuminaLabSwarmPolicy (Least-Privilege)")
+    print("  1. AWS::S3::Bucket         -> LuminaLabVaultBucket (with Web CORS)")
+    print("  2. AWS::DynamoDB::Table    -> LuminaLabImpactTable (On-Demand PAY_PER_REQUEST)")
+    print("  3. AWS::Logs::LogGroup     -> LuminaLabAppLogGroup (30-day retention)")
+    print("  4. AWS::KMS::Key / SNS     -> LuminaLabAlertsTopic (KMS-encrypted operational alerts)")
+    print("  5. AWS::CloudWatch::Alarm  -> DynamoDB SystemErrors, Throttles, UserErrors & Fallback alarms")
+    print("  6. AWS::IAM::ManagedPolicy -> LuminaLabSwarmPolicy (Least-Privilege, no Scan)")
 
     if not auto_approve:
         try:
@@ -215,26 +225,26 @@ def deploy_stack(stack_name: str, region: str, env_file: Path, auto_approve: boo
     t0 = time.time()
     print(f"\n[Deploying] Initiating CloudFormation {action_label}...")
 
+    stack_params = [
+        {"ParameterKey": "EnvironmentName", "ParameterValue": "prod"},
+        {"ParameterKey": "BillingMode", "ParameterValue": "PAY_PER_REQUEST"},
+        {"ParameterKey": "NotificationEmail", "ParameterValue": alert_email},
+    ]
+
     try:
         if not stack_exists:
             cf_client.create_stack(
                 StackName=stack_name,
                 TemplateBody=template_body,
                 Capabilities=["CAPABILITY_IAM", "CAPABILITY_NAMED_IAM"],
-                Parameters=[
-                    {"ParameterKey": "EnvironmentName", "ParameterValue": "prod"},
-                    {"ParameterKey": "BillingMode", "ParameterValue": "PAY_PER_REQUEST"},
-                ],
+                Parameters=stack_params,
             )
         else:
             cf_client.update_stack(
                 StackName=stack_name,
                 TemplateBody=template_body,
                 Capabilities=["CAPABILITY_IAM", "CAPABILITY_NAMED_IAM"],
-                Parameters=[
-                    {"ParameterKey": "EnvironmentName", "ParameterValue": "prod"},
-                    {"ParameterKey": "BillingMode", "ParameterValue": "PAY_PER_REQUEST"},
-                ],
+                Parameters=stack_params,
             )
     except Exception as exc:
         if "No updates are to be performed" in str(exc):
@@ -265,6 +275,8 @@ def deploy_stack(stack_name: str, region: str, env_file: Path, auto_approve: boo
         print(f"  • S3 Vault Bucket : {outputs.get('S3BucketName')}")
         print(f"  • DynamoDB Ledger : {outputs.get('DynamoTableName')}")
         print(f"  • IAM Policy ARN  : {outputs.get('IamPolicyArn')}")
+        print(f"  • App Log Group   : {outputs.get('AppLogGroupName')}")
+        print(f"  • Alerts SNS Topic: {outputs.get('AlertsTopicArn')}")
         print(f"  • AWS Region      : {outputs.get('AwsRegion')}")
 
         sync_env_file(env_file, outputs, auto_approve=auto_approve)
@@ -356,6 +368,11 @@ def main() -> None:
         action="store_true",
         help="Tear down and delete all provisioned CloudFormation resources",
     )
+    parser.add_argument(
+        "--alert-email",
+        default=os.getenv("LUMINA_ALERT_EMAIL", ""),
+        help="Optional email address subscribed to CloudWatch alert notifications",
+    )
 
     args = parser.parse_args()
 
@@ -368,6 +385,7 @@ def main() -> None:
             env_file=args.env_file,
             auto_approve=args.auto_approve,
             dry_run=args.dry_run,
+            alert_email=args.alert_email,
         )
 
 

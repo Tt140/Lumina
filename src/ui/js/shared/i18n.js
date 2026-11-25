@@ -4,7 +4,7 @@ const I18N = {
   en: {
     lang: "en",
     dir: "ltr",
-    pageTitle: "LuminaLab Swarm | Enterprise Adaptive STEM Labs",
+    pageTitle: "LuminaLab Swarm | Interactive STEM Micro-Labs",
     langBtn: "العربية",
     statusMock: "Deterministic Mock",
     statusCloud: "AWS Bedrock Active",

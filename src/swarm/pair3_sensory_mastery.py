@@ -1,10 +1,17 @@
 """LuminaLab Swarm - Pair 3: Sensory Accessibility Adaptation and Socratic Mastery."""
 
 import json
+import logging
 import re
 from typing import Any
 from strands import Agent, tool
 from src.contracts.schemas import DeconstructedConcept, AccessibilityPack
+from src.swarm.json_utils import (
+    extract_agent_response_text as _get_agent_response_text,
+    extract_json_dict as _extract_json_dict,
+    invoke_agent_for_json,
+    is_non_retryable_provider_error,
+)
 from src.swarm.model_factory import get_model
 from src.tools.accessibility_tools import (
     bionic_reading_format,
@@ -123,60 +130,6 @@ def create_agent_3b(model=None) -> Agent:
     )
 
 
-def _extract_json_dict(text: str) -> dict:
-    """Helper to parse a JSON dictionary from raw agent output with high resilience."""
-    clean_text = text.strip()
-
-    # 1. Search for fenced code blocks containing a JSON object
-    json_block = re.search(r"```(?:json)?\s*(\{[\s\S]*?\})\s*```", clean_text, flags=re.IGNORECASE)
-    if json_block:
-        candidate = json_block.group(1).strip()
-        try:
-            return json.loads(candidate)
-        except Exception:
-            try:
-                cleaned = re.sub(r",\s*([}\]])", r"\1", candidate)
-                return json.loads(cleaned)
-            except Exception:
-                pass
-
-    # 2. Search for outermost curly braces
-    start = clean_text.find("{")
-    end = clean_text.rfind("}")
-    if start != -1 and end != -1 and end > start:
-        snippet = clean_text[start : end + 1]
-        try:
-            return json.loads(snippet)
-        except Exception:
-            try:
-                cleaned = re.sub(r",\s*([}\]])", r"\1", snippet)
-                return json.loads(cleaned)
-            except Exception:
-                pass
-
-    # 3. Direct load attempt with trailing comma cleanup
-    try:
-        return json.loads(clean_text)
-    except Exception:
-        cleaned = re.sub(r",\s*([}\]])", r"\1", clean_text)
-        return json.loads(cleaned)
-
-
-def _get_agent_response_text(res: Any) -> str:
-    """Helper to extract text content from an AgentResult."""
-    if hasattr(res, "message") and isinstance(res.message, dict):
-        content = res.message.get("content", [])
-        if isinstance(content, list) and len(content) > 0:
-            first = content[0]
-            if isinstance(first, dict) and "text" in first:
-                return first["text"]
-            elif hasattr(first, "text"):
-                return getattr(first, "text")
-        elif isinstance(content, str):
-            return content
-    return str(res)
-
-
 def run_pair3(
     deconstructed: DeconstructedConcept,
     model=None
@@ -220,32 +173,57 @@ def run_pair3(
     )
 
     try:
-        res_3a = agent_3a(prompt_3a)
-        text_3a = _get_agent_response_text(res_3a)
-        data_3a = _extract_json_dict(text_3a)
-    except Exception:
-        # Fallback to deterministic tools
+        data_3a = invoke_agent_for_json(
+            agent_3a,
+            prompt_3a,
+            max_json_attempts=2,
+            required_hint="JSON object with adhd_steps (3 strings), bionic_reading_html, home_experiment (title, materials[>=2], steps[>=2], safety_note), and voice_script.",
+            agent_label="Agent 3A: SensoryAdapter",
+        )
+    except Exception as exc:
+        if is_non_retryable_provider_error(exc):
+            raise
         data_3a = {}
 
-    # Safe defaults from deterministic tools if anything is missing
-    adhd_steps = data_3a.get("adhd_steps")
-    if not isinstance(adhd_steps, list) or len(adhd_steps) != 3:
+    # Normalize & apply deterministic fallbacks so malformed nested fields never break AccessibilityPack
+    raw_steps = data_3a.get("adhd_steps")
+    adhd_steps: list[str] = []
+    if isinstance(raw_steps, list):
+        for s in raw_steps:
+            txt = (
+                str(s.get("text") or s.get("description") or s.get("step") or s)
+                if isinstance(s, dict)
+                else str(s)
+            ).strip()
+            if txt:
+                adhd_steps.append(txt)
+    if len(adhd_steps) != 3:
         adhd_steps = adhd_micro_chunk(expl, num_steps=3, language=lang)
 
-    bionic_html = data_3a.get("bionic_reading_html")
+    bionic_html = str(data_3a.get("bionic_reading_html") or "").strip()
     if not bionic_html or "<b>" not in bionic_html:
         bionic_html = bionic_reading_format(expl)
 
-    home_exp = data_3a.get("home_experiment")
-    if (
-        not isinstance(home_exp, dict)
-        or not all(k in home_exp for k in ["title", "materials", "steps", "safety_note"])
-        or len(home_exp.get("materials", [])) < 2
-        or len(home_exp.get("steps", [])) < 2
-    ):
-        home_exp = generate_home_experiment_template(deconstructed.core_concept, language=lang)
+    fallback_exp = generate_home_experiment_template(deconstructed.core_concept, language=lang)
+    raw_exp = data_3a.get("home_experiment")
+    if isinstance(raw_exp, dict):
+        mats = [str(m).strip() for m in (raw_exp.get("materials") or []) if str(m).strip()] if isinstance(raw_exp.get("materials"), list) else []
+        exp_steps = [
+            (str(st.get("description") or st.get("text") or st) if isinstance(st, dict) else str(st)).strip()
+            for st in (raw_exp.get("steps") or [])
+            if st is not None
+        ] if isinstance(raw_exp.get("steps"), list) else []
+        exp_steps = [st for st in exp_steps if st]
+        home_exp = {
+            "title": str(raw_exp.get("title") or fallback_exp["title"]).strip(),
+            "materials": mats if len(mats) >= 2 else fallback_exp["materials"],
+            "steps": exp_steps if len(exp_steps) >= 2 else fallback_exp["steps"],
+            "safety_note": str(raw_exp.get("safety_note") or fallback_exp["safety_note"]).strip(),
+        }
+    else:
+        home_exp = fallback_exp
 
-    voice_script = data_3a.get("voice_script")
+    voice_script = str(data_3a.get("voice_script") or "").strip()
     if not voice_script:
         voice_script = generate_voice_script(expl, adhd_steps, language=lang, grade=grade)
 
@@ -277,21 +255,27 @@ def run_pair3(
     )
 
     try:
-        res_3b = agent_3b(prompt_3b)
-        text_3b = _get_agent_response_text(res_3b)
-        data_3b = _extract_json_dict(text_3b)
-    except Exception:
+        data_3b = invoke_agent_for_json(
+            agent_3b,
+            prompt_3b,
+            max_json_attempts=2,
+            required_hint="JSON object with challenge_question, challenge_hint, challenge_answer, learning_observation.",
+            agent_label="Agent 3B: SocraticTutor",
+        )
+    except Exception as exc:
+        if is_non_retryable_provider_error(exc):
+            raise
         data_3b = {}
 
     challenge_dict = {
-        "challenge_question": data_3b.get("challenge_question")
+        "challenge_question": str(data_3b.get("challenge_question") or "").strip()
         or (f"ما هو المفهوم الأساسي في {deconstructed.core_concept}؟" if lang == "ar" else f"What is the key takeaway in {deconstructed.core_concept}?"),
-        "challenge_hint": data_3b.get("challenge_hint")
+        "challenge_hint": str(data_3b.get("challenge_hint") or "").strip()
         or ("راجع الشرح المبسط أعلاه وتأمل العلاقة." if lang == "ar" else "Review the simplified explanation and check the equation relationship."),
-        "challenge_answer": data_3b.get("challenge_answer") or expl,
+        "challenge_answer": str(data_3b.get("challenge_answer") or "").strip() or expl,
         "partial_metrics": {
             "baseline_grade_level": deconstructed.baseline_grade_level,
-            "learning_observation": data_3b.get("learning_observation", "Concept mastered.")
+            "learning_observation": str(data_3b.get("learning_observation") or "Concept mastered.").strip()
         }
     }
 

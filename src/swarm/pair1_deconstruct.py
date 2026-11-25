@@ -1,16 +1,26 @@
 """LuminaLab Swarm - Pair 1: Concept Deconstruction and Archetype Routing."""
 
 import json
+import logging
+import math
 import re
 from typing import Any
 from strands import Agent, tool
 from src.contracts.schemas import LessonInput, DeconstructedConcept, EngineType
+from src.swarm.json_utils import (
+    extract_agent_response_text as _get_agent_response_text,
+    extract_json_dict as _extract_json_dict,
+    invoke_agent_for_json,
+    is_non_retryable_provider_error,
+)
 from src.swarm.model_factory import get_model
 from src.tools.impact_calculator import calculate_grade_level
 
 
 from src.swarm.pedagogical_calibration import parse_student_grade, get_pedagogical_directive
 from src.swarm.terminal_stream import get_hackathon_callback_handler
+
+logger = logging.getLogger("luminalab.pair1")
 
 
 @tool
@@ -92,58 +102,212 @@ def create_agent_1b(model=None) -> Agent:
     )
 
 
-def _extract_json_dict(text: str) -> dict:
-    """Helper to parse a JSON dictionary from raw agent output with high resilience."""
-    clean_text = text.strip()
-
-    # 1. Search for fenced code blocks containing a JSON object
-    json_block = re.search(r"```(?:json)?\s*(\{[\s\S]*?\})\s*```", clean_text, flags=re.IGNORECASE)
-    if json_block:
-        candidate = json_block.group(1).strip()
-        try:
-            return json.loads(candidate)
-        except Exception:
+def _coerce_finite_float(val: Any, default: float) -> float:
+    """Safely convert numeric or string values (including scientific notation) into a finite float."""
+    if isinstance(val, bool):
+        return default
+    if isinstance(val, (int, float)):
+        f = float(val)
+        return f if math.isfinite(f) else default
+    if isinstance(val, str):
+        cleaned = val.strip().replace(",", "")
+        match = re.search(r"-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?", cleaned)
+        if match:
             try:
-                cleaned = re.sub(r",\s*([}\]])", r"\1", candidate)
-                return json.loads(cleaned)
-            except Exception:
+                f = float(match.group(0))
+                if math.isfinite(f):
+                    return f
+            except ValueError:
                 pass
-
-    # 2. Search for outermost curly braces
-    start = clean_text.find("{")
-    end = clean_text.rfind("}")
-    if start != -1 and end != -1 and end > start:
-        snippet = clean_text[start : end + 1]
-        try:
-            return json.loads(snippet)
-        except Exception:
-            try:
-                cleaned = re.sub(r",\s*([}\]])", r"\1", snippet)
-                return json.loads(cleaned)
-            except Exception:
-                pass
-
-    # 3. Direct load attempt with trailing comma cleanup
-    try:
-        return json.loads(clean_text)
-    except Exception:
-        cleaned = re.sub(r",\s*([}\]])", r"\1", clean_text)
-        return json.loads(cleaned)
+    return default
 
 
-def _get_agent_response_text(res: Any) -> str:
-    """Helper to extract text content from an AgentResult."""
-    if hasattr(res, "message") and isinstance(res.message, dict):
-        content = res.message.get("content", [])
-        if isinstance(content, list) and len(content) > 0:
-            first = content[0]
-            if isinstance(first, dict) and "text" in first:
-                return first["text"]
-            elif hasattr(first, "text"):
-                return getattr(first, "text")
-        elif isinstance(content, str):
-            return content
-    return str(res)
+def _sanitize_key_variables(raw_vars: Any, lesson_input: LessonInput) -> list[dict[str, Any]]:
+    """Normalize, deduplicate, and enforce numeric/schema bounds on key_variables."""
+    sanitized: list[dict[str, Any]] = []
+    seen_keys: set[tuple[str, str]] = set()
+
+    if isinstance(raw_vars, list):
+        for idx, item in enumerate(raw_vars):
+            if isinstance(item, str) and item.strip():
+                sym = f"x_{idx + 1}"
+                name = item.strip()
+                item_dict: dict[str, Any] = {"name": name, "symbol": sym, "unit": ""}
+            elif isinstance(item, dict):
+                item_dict = dict(item)
+            else:
+                continue
+
+            name = str(item_dict.get("name") or item_dict.get("symbol") or f"Variable {idx + 1}").strip()
+            symbol = str(item_dict.get("symbol") or f"v{idx + 1}").strip()
+            unit = str(item_dict.get("unit") or "").strip()
+
+            dedup_key = (symbol.lower(), name.lower())
+            if dedup_key in seen_keys:
+                continue
+            seen_keys.add(dedup_key)
+
+            min_val = _coerce_finite_float(item_dict.get("min_val", item_dict.get("min")), 0.0)
+            max_val = _coerce_finite_float(item_dict.get("max_val", item_dict.get("max")), min_val + 100.0)
+            if min_val >= max_val:
+                max_val = min_val + (abs(min_val) if min_val != 0.0 else 10.0)
+
+            default_val = _coerce_finite_float(
+                item_dict.get("default_val", item_dict.get("default")),
+                (min_val + max_val) / 2.0,
+            )
+            if default_val < min_val or default_val > max_val:
+                default_val = (min_val + max_val) / 2.0
+
+            sanitized.append({
+                "name": name,
+                "symbol": symbol,
+                "unit": unit,
+                "min_val": min_val,
+                "max_val": max_val,
+                "default_val": default_val,
+            })
+
+    if not sanitized:
+        default_name = "تقدم المفهوم" if lesson_input.language == "ar" else "Concept Progression"
+        sanitized.append({
+            "name": default_name,
+            "symbol": "x",
+            "unit": "step",
+            "min_val": 1.0,
+            "max_val": 10.0,
+            "default_val": 1.0,
+        })
+
+    return sanitized
+
+
+def _sanitize_deconstructed_data(data: dict[str, Any], lesson_input: LessonInput) -> dict[str, Any]:
+    """Normalize Agent 1A JSON payload so any lesson/subject satisfies DeconstructedConcept cleanly."""
+    clean = dict(data) if isinstance(data, dict) else {}
+
+    core = str(clean.get("core_concept") or "").strip()
+    if len(core) < 5:
+        core = f"{lesson_input.subject}: {lesson_input.topic}".strip()
+        if len(core) < 5:
+            core = f"{core} Concept".strip()
+    clean["core_concept"] = core
+
+    raw_eq = clean.get("target_equation_or_steps")
+    if isinstance(raw_eq, list):
+        eq_str = "; ".join(str(x).strip() for x in raw_eq if str(x).strip())
+    else:
+        eq_str = str(raw_eq or "").strip()
+    clean["target_equation_or_steps"] = eq_str or core
+
+    bottleneck = str(clean.get("cognitive_bottleneck") or "").strip()
+    if not bottleneck:
+        bottleneck = (
+            f"فهم العلاقة السببية الأساسية خلف {lesson_input.topic} بدلاً من الحفظ المجرد."
+            if lesson_input.language == "ar"
+            else f"Connecting the underlying cause-and-effect mechanism behind {lesson_input.topic} rather than memorizing formulas."
+        )
+    clean["cognitive_bottleneck"] = bottleneck
+
+    expl = str(clean.get("simplified_explanation") or "").strip()
+    if len(expl) < 10:
+        excerpt = " ".join(lesson_input.raw_text.strip().split())
+        expl = excerpt[:240] if len(excerpt) >= 10 else f"{core}: {excerpt}"
+    clean["simplified_explanation"] = expl
+
+    baseline = _coerce_finite_float(clean.get("baseline_grade_level"), 0.0)
+    if baseline <= 0.0:
+        baseline = calculate_grade_level(lesson_input.raw_text, language=lesson_input.language)
+    clean["baseline_grade_level"] = min(12.0, max(1.0, baseline))
+
+    raw_vars = clean.get("key_variables") if clean.get("key_variables") is not None else clean.get("variables")
+    clean["key_variables"] = _sanitize_key_variables(raw_vars, lesson_input)
+    return clean
+
+
+def _build_fallback_deconstructed_data(lesson_input: LessonInput) -> dict[str, Any]:
+    """Deterministic Pair 1 fallback used only after all non-auth JSON/schema retries are exhausted."""
+    eq_match = re.search(r"([A-Za-z\[\]\u0621-\u064A_]{1,12}\s*=\s*[^.\n;،]{2,60})", lesson_input.raw_text)
+    target_eq = eq_match.group(1).strip() if eq_match else lesson_input.topic
+
+    # Extract ASCII variable tokens from detected equation when available
+    var_candidates: list[dict[str, Any]] = []
+    if eq_match and "=" in target_eq:
+        rhs = target_eq.split("=", 1)[1]
+        tokens = re.findall(r"\b([A-Za-z][A-Za-z0-9_]{0,4})\b", rhs)
+        skip = {"pow", "sqrt", "log", "log10", "sin", "cos", "tan", "exp", "abs", "min", "max"}
+        seen: set[str] = set()
+        for tok in tokens:
+            if tok.lower() in skip or tok in seen:
+                continue
+            seen.add(tok)
+            var_candidates.append({
+                "name": tok,
+                "symbol": tok,
+                "unit": "",
+                "min_val": 1.0,
+                "max_val": 20.0,
+                "default_val": 5.0,
+            })
+
+    return _sanitize_deconstructed_data(
+        {
+            "core_concept": f"{lesson_input.topic} ({lesson_input.subject})",
+            "target_equation_or_steps": target_eq,
+            "cognitive_bottleneck": (
+                f"ربط المتغيرات الأساسية عملياً في درس {lesson_input.topic}."
+                if lesson_input.language == "ar"
+                else f"Visualizing how key variables interact in {lesson_input.topic}."
+            ),
+            "baseline_grade_level": calculate_grade_level(lesson_input.raw_text, language=lesson_input.language),
+            "simplified_explanation": " ".join(lesson_input.raw_text.strip().split())[:260],
+            "key_variables": var_candidates,
+        },
+        lesson_input,
+    )
+
+
+def _normalize_engine_type(raw_engine: Any, target_eq: str, key_vars: list[dict[str, Any]]) -> EngineType:
+    """Resolve Agent 1B engine selection with synonym normalization and safe routing fallback."""
+    token = str(raw_engine or "").strip().lower()
+    aliases = {
+        "slider": EngineType.SLIDER,
+        "sliders": EngineType.SLIDER,
+        "simulation": EngineType.SLIDER,
+        "stepper": EngineType.STEPPER,
+        "step": EngineType.STEPPER,
+        "steps": EngineType.STEPPER,
+        "timeline": EngineType.STEPPER,
+        "diagram": EngineType.DIAGRAM,
+        "graph": EngineType.DIAGRAM,
+        "network": EngineType.DIAGRAM,
+        "flowchart": EngineType.DIAGRAM,
+        "balance": EngineType.BALANCE,
+        "scale": EngineType.BALANCE,
+        "sort": EngineType.BALANCE,
+        "quiz": EngineType.BALANCE,
+    }
+    if token in aliases:
+        return aliases[token]
+    for eng in EngineType:
+        if eng.value in token:
+            return eng
+    return EngineType.SLIDER if ("=" in target_eq and len(key_vars) >= 1) else EngineType.STEPPER
+
+
+def _validate_agent_1a_schema(data: dict[str, Any], lesson_input: LessonInput) -> None:
+    """Verify sanitized Agent 1A dictionary constructs DeconstructedConcept cleanly before continuing."""
+    DeconstructedConcept(
+        original_input=lesson_input,
+        core_concept=data["core_concept"],
+        target_equation_or_steps=data["target_equation_or_steps"],
+        cognitive_bottleneck=data["cognitive_bottleneck"],
+        baseline_grade_level=float(data["baseline_grade_level"]),
+        simplified_explanation=data["simplified_explanation"],
+        key_variables=data["key_variables"],
+        recommended_engine=EngineType.SLIDER,
+        engine_justification="Schema validation check.",
+    )
 
 
 def run_pair1(lesson_input: LessonInput, model=None) -> DeconstructedConcept:
@@ -158,7 +322,7 @@ def run_pair1(lesson_input: LessonInput, model=None) -> DeconstructedConcept:
         DeconstructedConcept containing analyzed concept, key variables, and recommended engine.
 
     Raises:
-        ValueError: If agent output cannot be parsed or validated against schemas.
+        ValueError: If authentication fails or final contract assembly fails.
     """
     agent_1a = create_agent_1a(model=model)
     agent_1b = create_agent_1b(model=model)
@@ -182,17 +346,29 @@ def run_pair1(lesson_input: LessonInput, model=None) -> DeconstructedConcept:
         f"Text:\n{lesson_input.raw_text}"
     )
 
-    try:
-        res_1a = agent_1a(prompt_1a)
-        text_1a = _get_agent_response_text(res_1a)
-        data_1a = _extract_json_dict(text_1a)
-    except Exception as exc:
-        raise ValueError(f"Failed to parse Agent 1A response: {exc}") from exc
+    def _normalize_and_check_1a(raw_dict: dict[str, Any]) -> dict[str, Any]:
+        cleaned = _sanitize_deconstructed_data(raw_dict, lesson_input)
+        _validate_agent_1a_schema(cleaned, lesson_input)
+        return cleaned
 
-    # Ensure baseline grade level is present and computed
-    baseline_grade = data_1a.get("baseline_grade_level")
-    if baseline_grade is None or baseline_grade <= 0.0:
-        data_1a["baseline_grade_level"] = calculate_grade_level(lesson_input.raw_text, language=lesson_input.language)
+    try:
+        data_1a = invoke_agent_for_json(
+            agent_1a,
+            prompt_1a,
+            max_json_attempts=3,
+            normalizer=_normalize_and_check_1a,
+            required_hint=(
+                "JSON object with keys: core_concept, target_equation_or_steps, cognitive_bottleneck, "
+                "baseline_grade_level, simplified_explanation, key_variables "
+                "(non-empty list of objects with name, symbol, unit, min_val, max_val, default_val)."
+            ),
+            agent_label="Agent 1A: ConceptExtractor",
+        )
+    except Exception as exc:
+        if is_non_retryable_provider_error(exc):
+            raise
+        logger.warning(f"[Pair 1] Agent 1A exhausted retries ({exc}); engaging deterministic concept fallback.")
+        data_1a = _build_fallback_deconstructed_data(lesson_input)
 
     # 2. Run Agent 1B
     prompt_1b = (
@@ -201,22 +377,25 @@ def run_pair1(lesson_input: LessonInput, model=None) -> DeconstructedConcept:
     )
 
     try:
-        res_1b = agent_1b(prompt_1b)
-        text_1b = _get_agent_response_text(res_1b)
-        data_1b = _extract_json_dict(text_1b)
+        data_1b = invoke_agent_for_json(
+            agent_1b,
+            prompt_1b,
+            max_json_attempts=2,
+            required_hint='JSON object with keys "recommended_engine" ("slider"|"stepper"|"diagram"|"balance") and "engine_justification".',
+            agent_label="Agent 1B: ArchetypeRouter",
+        )
     except Exception as exc:
-        raise ValueError(f"Failed to parse Agent 1B response: {exc}") from exc
+        if is_non_retryable_provider_error(exc):
+            raise
+        logger.warning(f"[Pair 1] Agent 1B exhausted retries ({exc}); engaging deterministic routing fallback.")
+        data_1b = {}
 
-    engine_str = data_1b.get("recommended_engine", "slider").lower()
-    try:
-        recommended_engine = EngineType(engine_str)
-    except ValueError as exc:
-        raise ValueError(f"Invalid recommended_engine returned by Agent 1B: {engine_str}") from exc
-
-        # Deterministic safeguard: If target_equation_or_steps contains an algebraic equation ('=')
-    # and key_variables has at least one variable, it is fundamentally quantitative and should run in the slider engine.
     target_eq = str(data_1a.get("target_equation_or_steps", ""))
     key_vars = data_1a.get("key_variables", [])
+    recommended_engine = _normalize_engine_type(data_1b.get("recommended_engine"), target_eq, key_vars)
+
+    # Deterministic safeguard: If target_equation_or_steps contains an algebraic equation ('=')
+    # and key_variables has at least one variable, it is fundamentally quantitative and should run in the slider engine.
     if recommended_engine == EngineType.STEPPER and "=" in target_eq and len(key_vars) >= 1:
         recommended_engine = EngineType.SLIDER
         data_1b["engine_justification"] = (

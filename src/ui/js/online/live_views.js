@@ -61,6 +61,10 @@ function populateGeneratedOutputs(data) {
     || data.topic
     || "STEM Lab";
   $("lab-topic-title").textContent = labTitle;
+  if ($("lab-engine-tag")) {
+    $("lab-engine-tag").textContent = data.engine
+      || (data.simulation_spec && data.simulation_spec.archetype ? `${String(data.simulation_spec.archetype).toUpperCase()} ENGINE (SANDBOXED)` : "SANDBOXED ENGINE");
+  }
 
   const frame = $("lab-frame");
   const htmlContent = (data.verified_lab && data.verified_lab.html_content) || data.lab_html || data.simulation_html || "<html><body><h3>Lab generated</h3></body></html>";
@@ -70,10 +74,20 @@ function populateGeneratedOutputs(data) {
   $("empty-sensory").style.display = "none";
   $("active-sensory").style.display = "block";
 
+  const isAr = (currentLang === "ar");
+  const pickLoc = (val) => {
+    if (typeof pickLocalizedValue === "function") return pickLocalizedValue(val, isAr);
+    if (val && typeof val === "object" && !Array.isArray(val) && ("en" in val || "ar" in val)) {
+      return isAr ? (val.ar ?? val.en) : (val.en ?? val.ar);
+    }
+    return val;
+  };
+
   const acc = data.accessibility || data.sensory_suite || {};
   const adhdContainer = $("adhd-steps");
   adhdContainer.innerHTML = "";
-  const steps = acc.adhd_steps || [
+  const rawSteps = pickLoc(acc.adhd_steps);
+  const steps = Array.isArray(rawSteps) ? rawSteps : [
     { title: "Step 1: Observe Setup", description: "Familiarize yourself with the initial state." },
     { title: "Step 2: Change Variable", description: "Adjust one parameter at a time." },
     { title: "Step 3: Analyze Reaction", description: "Record the mathematical output." }
@@ -94,7 +108,7 @@ function populateGeneratedOutputs(data) {
       }
     } else if (typeof st === "object" && st !== null) {
       title = st.title || st.step_title || `Step ${idx + 1}`;
-      desc = st.description || st.step_description || "";
+      desc = st.description || st.step_description || st.desc || "";
     }
     card.innerHTML = `
       <div class="adhd-step-num">${idx + 1}</div>
@@ -105,10 +119,11 @@ function populateGeneratedOutputs(data) {
   });
 
   const bionicBox = $("bionic-content");
-  const bionicHtml = acc.bionic_reading_html || $("input-text").value;
+  const bionicHtml = acc.bionic_reading_html || pickLoc(acc.bionic) || $("input-text").value;
   bionicBox.innerHTML = sanitizeArabicBionic(bionicHtml);
 
   const kitchenBox = $("kitchen-content");
+  const kitchenFallbackText = acc.kitchen_lab || pickLoc(acc.kitchen);
   let kitchenDesc = "";
   if (acc.home_experiment) {
     const exp = acc.home_experiment;
@@ -124,7 +139,7 @@ function populateGeneratedOutputs(data) {
       kitchenDesc += `<div style="font-size:12.5px; color:#b91c1c; margin-top:10px; font-weight:600;">⚠️ ${exp.safety_note}</div>`;
     }
   } else {
-    kitchenDesc = `<p style="font-size:14px; line-height:1.6; color:var(--slate-800);">${acc.kitchen_lab || (currentLang === "en" ? "Use everyday items to replicate this physical relationship." : "استخدم أدوات منزلية بسيطة لتطبيق هذه العلاقة الفيزيائية.")}</p>`;
+    kitchenDesc = `<p style="font-size:14px; line-height:1.6; color:var(--slate-800);">${kitchenFallbackText || (currentLang === "en" ? "Use everyday items to replicate this physical relationship." : "استخدم أدوات منزلية بسيطة لتطبيق هذه العلاقة الفيزيائية.")}</p>`;
   }
   kitchenBox.innerHTML = kitchenDesc;
 

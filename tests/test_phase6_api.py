@@ -78,6 +78,8 @@ def test_serve_ui(client: TestClient):
     assert response.status_code == 200
     assert "text/html" in response.headers.get("content-type", "")
     assert "LuminaLab" in response.text
+    assert "<title id=\"page-title\">LuminaLab Swarm | Interactive STEM Micro-Labs</title>" in response.text
+    assert "Enterprise" not in response.text.split("</title>")[0]
 
 
 def test_ui_has_form_elements(client: TestClient):
@@ -277,3 +279,109 @@ def test_audio_stream_not_found(client: TestClient):
     """Test non-existent audio file returns 404."""
     resp = client.get("/api/audio/non_existent_file_9999.mp3")
     assert resp.status_code == 404
+
+
+# ============================================================================
+# 6. Audit Reliability Inspector (/audit & /api/audit/*) Tests
+# ============================================================================
+
+def test_serve_audit_ui(client: TestClient):
+    """Verify GET /audit renders the Ledger Reliability Inspector HTML."""
+    resp = client.get("/audit")
+    assert resp.status_code == 200
+    assert "text/html" in resp.headers.get("content-type", "")
+    assert "Ledger Reliability Inspector" in resp.text
+    assert "/static/js/audit.js" in resp.text
+    assert "/static/css/audit.css" in resp.text
+
+
+def test_audit_benchmarks_endpoint(client: TestClient):
+    """Verify /api/audit/benchmarks loads measured JSON snapshots and computes deltas."""
+    resp = client.get("/api/audit/benchmarks")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert "before" in data
+    assert "after" in data
+    assert "comparison" in data
+    if data["before"] and data["after"]:
+        comp = data["comparison"]
+        assert comp["rcu_reduction_pct"] > 90.0
+        assert comp["read_p50_speedup"] > 1.0
+
+
+def test_audit_stats_and_idempotency_and_cleanup_probes(client: TestClient):
+    """Verify /api/audit live probe workflow: stats-probe -> idempotency-probe -> cleanup-probe."""
+    stats_resp = client.get("/api/audit/stats-probe")
+    assert stats_resp.status_code == 200
+    s_data = stats_resp.json()
+    assert s_data["stats"]["total_sessions"] == 0
+    assert s_data["latency_ms"] >= 0.0
+
+    idem_resp = client.post("/api/audit/idempotency-probe", json={})
+    assert idem_resp.status_code == 200
+    idem = idem_resp.json()
+    assert idem["session_id"].startswith("audit-probe-")
+    assert idem["delta_first"] == 1
+    assert idem["delta_second"] == 0
+    assert idem["idempotency_verified"] is True
+
+    # Guardrail: arbitrary non-probe IDs must be rejected
+    bad_clean = client.post("/api/audit/cleanup-probe", json={"session_ids": ["prod-session-1"]})
+    assert bad_clean.status_code == 400
+
+    clean_resp = client.post("/api/audit/cleanup-probe", json={"session_ids": [idem["session_id"]]})
+    assert clean_resp.status_code == 200
+    c_data = clean_resp.json()
+    assert c_data["deleted_count"] == 1
+    assert c_data["remaining_table_items"] == 0
+    assert c_data["stats_after"]["total_sessions"] == 0
+
+
+def test_audit_infrastructure_endpoint_mock(client: TestClient):
+    """Verify /api/audit/infrastructure responds cleanly with IAM no-Scan status in mock mode."""
+    resp = client.get("/api/audit/infrastructure")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["iam_policy"]["has_dynamodb_scan"] is False
+    assert "dynamodb:Scan" not in data["iam_policy"]["dynamodb_actions"]
+
+
+def test_format_alarm_metrics_deduplicates_system_errors():
+    """Verify composite MetricMath alarm metrics list SystemErrors once with Operation dimensions."""
+    composite_alarm = {
+        "Metrics": [
+            {
+                "Id": "m1",
+                "MetricStat": {
+                    "Metric": {
+                        "MetricName": "SystemErrors",
+                        "Dimensions": [
+                            {"Name": "TableName", "Value": "tbl"},
+                            {"Name": "Operation", "Value": "TransactWriteItems"},
+                        ],
+                    }
+                },
+            },
+            {
+                "Id": "m2",
+                "MetricStat": {
+                    "Metric": {
+                        "MetricName": "SystemErrors",
+                        "Dimensions": [
+                            {"Name": "TableName", "Value": "tbl"},
+                            {"Name": "Operation", "Value": "GetItem"},
+                        ],
+                    }
+                },
+            },
+        ]
+    }
+    throttle_alarm = {
+        "Metrics": [
+            {"Id": "m1", "MetricStat": {"Metric": {"MetricName": "ReadThrottleEvents", "Dimensions": []}}},
+            {"Id": "m2", "MetricStat": {"Metric": {"MetricName": "WriteThrottleEvents", "Dimensions": []}}},
+        ]
+    }
+    assert server._format_alarm_metrics(composite_alarm) == "SystemErrors (TransactWriteItems, GetItem)"
+    assert server._format_alarm_metrics(throttle_alarm) == "ReadThrottleEvents, WriteThrottleEvents"
+    assert server._format_alarm_metrics({"MetricName": "DynamoFallbackCount"}) == "DynamoFallbackCount"

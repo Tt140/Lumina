@@ -1,6 +1,7 @@
 """LuminaLab Swarm - Pair 2: Interactive Simulation Math & Quality Guard."""
 
 import json
+import logging
 import re
 import math
 import itertools
@@ -12,8 +13,16 @@ from src.contracts.schemas import (
     VerifiedMicroLab,
     EngineType,
 )
+from src.swarm.json_utils import (
+    extract_agent_response_text as _get_agent_response_text,
+    extract_json_dict as _extract_json_dict,
+    invoke_agent_for_json,
+    is_non_retryable_provider_error,
+)
 from src.swarm.pedagogical_calibration import parse_student_grade, get_pedagogical_directive
 from src.swarm.terminal_stream import get_hackathon_callback_handler
+
+logger = logging.getLogger("luminalab.pair2")
 
 # Complete Physics and Science Constants Registry
 MATH_PHYSICS_CONSTANTS: dict[str, float] = {
@@ -1023,58 +1032,92 @@ def create_agent_2b(model=None) -> Agent:
     )
 
 
-def _extract_json_dict(text: str) -> dict:
-    """Helper to parse a JSON dictionary from raw agent output with high resilience."""
-    clean_text = text.strip()
+def _ensure_engine_spec_completeness(
+    spec_data: dict[str, Any],
+    deconstructed: DeconstructedConcept,
+) -> dict[str, Any]:
+    """Guarantee SimulationSpec satisfies all engine-specific structural invariants (SLIDER/STEPPER/DIAGRAM/BALANCE)."""
+    data = dict(spec_data)
+    engine = deconstructed.recommended_engine
+    lang = deconstructed.original_input.language
+    data["engine_type"] = engine
 
-    # 1. Search for fenced code blocks containing a JSON object
-    json_block = re.search(r"```(?:json)?\s*(\{[\s\S]*?\})\s*```", clean_text, flags=re.IGNORECASE)
-    if json_block:
-        candidate = json_block.group(1).strip()
-        try:
-            return json.loads(candidate)
-        except Exception:
-            try:
-                cleaned = re.sub(r",\s*([}\]])", r"\1", candidate)
-                return json.loads(cleaned)
-            except Exception:
-                pass
+    if "title" not in data or not str(data.get("title") or "").strip():
+        data["title"] = deconstructed.core_concept[:60]
 
-    # 2. Search for outermost curly braces
-    start = clean_text.find("{")
-    end = clean_text.rfind("}")
-    if start != -1 and end != -1 and end > start:
-        snippet = clean_text[start : end + 1]
-        try:
-            return json.loads(snippet)
-        except Exception:
-            try:
-                cleaned = re.sub(r",\s*([}\]])", r"\1", snippet)
-                return json.loads(cleaned)
-            except Exception:
-                pass
+    if not data.get("variables"):
+        data["variables"] = list(deconstructed.key_variables)
+    if not data.get("formula_expression") or not str(data.get("formula_expression") or "").strip():
+        data["formula_expression"] = deconstructed.target_equation_or_steps or "Y = X"
 
-    # 3. Direct load attempt with trailing comma cleanup
-    try:
-        return json.loads(clean_text)
-    except Exception:
-        cleaned = re.sub(r",\s*([}\]])", r"\1", clean_text)
-        return json.loads(cleaned)
+    if engine == EngineType.STEPPER and len(data.get("steps") or []) < 1:
+        raw_parts = [
+            p.strip()
+            for p in re.split(r"[;\n]+|->|→", str(deconstructed.target_equation_or_steps or ""))
+            if p.strip()
+        ]
+        if len(raw_parts) < 2:
+            raw_parts = [
+                p.strip()
+                for p in re.split(r"[.،\n]+", str(deconstructed.simplified_explanation or ""))
+                if len(p.strip()) > 6
+            ]
+        if len(raw_parts) < 2:
+            raw_parts = [deconstructed.core_concept, deconstructed.simplified_explanation]
+        data["steps"] = [
+            {
+                "step_number": idx + 1,
+                "title": f"الخطوة {idx + 1}" if lang == "ar" else f"Step {idx + 1}",
+                "description": part,
+                "text": part,
+            }
+            for idx, part in enumerate(raw_parts[:5])
+        ]
 
+    if engine == EngineType.DIAGRAM and len(data.get("nodes") or []) < 2:
+        nodes: list[dict[str, Any]] = [
+            {
+                "id": "core",
+                "label": deconstructed.core_concept[:40],
+                "connections": [],
+            }
+        ]
+        for idx, var in enumerate((data.get("variables") or deconstructed.key_variables)[:4]):
+            if isinstance(var, dict):
+                nid = f"var_{idx + 1}"
+                lbl = str(var.get("name") or var.get("symbol") or nid).strip()
+                nodes[0]["connections"].append(nid)
+                nodes.append({"id": nid, "label": lbl[:40], "connections": ["core"]})
+        if len(nodes) < 2:
+            nodes[0]["connections"].append("effect")
+            nodes.append({
+                "id": "effect",
+                "label": "النتيجة" if lang == "ar" else "Outcome",
+                "connections": ["core"],
+            })
+        data["nodes"] = nodes
 
-def _get_agent_response_text(res: Any) -> str:
-    """Helper to extract text content from an AgentResult."""
-    if hasattr(res, "message") and isinstance(res.message, dict):
-        content = res.message.get("content", [])
-        if isinstance(content, list) and len(content) > 0:
-            first = content[0]
-            if isinstance(first, dict) and "text" in first:
-                return first["text"]
-            elif hasattr(first, "text"):
-                return getattr(first, "text")
-        elif isinstance(content, str):
-            return content
-    return str(res)
+    if engine == EngineType.BALANCE and len(data.get("challenge_items") or []) < 2:
+        cat_a = "عامل رئيسي" if lang == "ar" else "Primary Factor"
+        cat_b = "نتيجة أو متغير" if lang == "ar" else "Observed Effect"
+        items: list[dict[str, Any]] = []
+        for idx, var in enumerate((data.get("variables") or deconstructed.key_variables)[:4]):
+            if isinstance(var, dict):
+                items.append({
+                    "id": f"item_{idx + 1}",
+                    "label": str(var.get("name") or var.get("symbol") or f"Item {idx + 1}").strip(),
+                    "category": cat_a if idx % 2 == 0 else cat_b,
+                })
+        while len(items) < 2:
+            idx = len(items)
+            items.append({
+                "id": f"item_{idx + 1}",
+                "label": deconstructed.original_input.topic[:30] if idx == 0 else deconstructed.target_equation_or_steps[:30],
+                "category": cat_a if idx % 2 == 0 else cat_b,
+            })
+        data["challenge_items"] = items
+
+    return data
 
 
 def run_pair2(
@@ -1124,40 +1167,44 @@ def run_pair2(
         f"5. Return strictly valid JSON matching SimulationSpec schema."
     )
 
+    def _normalize_and_build_2a(raw_spec: dict[str, Any]) -> dict[str, Any]:
+        cleaned = _sanitize_simulation_spec(raw_spec, grade=grade)
+        cleaned = _ensure_engine_spec_completeness(cleaned, deconstructed)
+        raw_arch = str(cleaned.get("visual_archetype", "")).strip().lower()
+        if raw_arch not in VALID_ARCHETYPES:
+            syms = [str(v.get("symbol", "")) for v in cleaned.get("variables", []) if isinstance(v, dict)]
+            cleaned["visual_archetype"] = _infer_visual_archetype(
+                topic=f"{deconstructed.original_input.subject} {deconstructed.original_input.topic} {deconstructed.core_concept}",
+                formula=cleaned.get("formula_expression", deconstructed.target_equation_or_steps),
+                var_symbols=syms,
+            )
+        else:
+            cleaned["visual_archetype"] = raw_arch
+        cleaned.pop("scenegraph_2d", None)
+        SimulationSpec(**cleaned)
+        return cleaned
+
     try:
-        res_2a = agent_2a(prompt_2a)
-        text_2a = _get_agent_response_text(res_2a)
-        spec_data = _extract_json_dict(text_2a)
-    except Exception as exc:
-        raise ValueError(f"Failed to parse Agent 2A output: {exc}") from exc
-
-    # Sanitize and normalize spec parameters
-    spec_data = _sanitize_simulation_spec(spec_data, grade=grade)
-
-    # Ensure engine type aligns with recommendation
-    spec_data["engine_type"] = deconstructed.recommended_engine
-    if "title" not in spec_data or not str(spec_data["title"]).strip():
-        spec_data["title"] = deconstructed.core_concept[:60]
-
-    # Guarantee variables and formula fallback for SLIDER and all engines
-    if not spec_data.get("variables"):
-        spec_data["variables"] = deconstructed.key_variables
-    if not spec_data.get("formula_expression") or not str(spec_data.get("formula_expression")).strip():
-        spec_data["formula_expression"] = deconstructed.target_equation_or_steps
-
-    # Verify and set visual_archetype deterministically
-    raw_arch = str(spec_data.get("visual_archetype", "")).strip().lower()
-    if raw_arch not in VALID_ARCHETYPES:
-        syms = [str(v.get("symbol", "")) for v in spec_data.get("variables", []) if isinstance(v, dict)]
-        spec_data["visual_archetype"] = _infer_visual_archetype(
-            topic=f"{deconstructed.original_input.subject} {deconstructed.original_input.topic} {deconstructed.core_concept}",
-            formula=spec_data.get("formula_expression", deconstructed.target_equation_or_steps),
-            var_symbols=syms
+        spec_data = invoke_agent_for_json(
+            agent_2a,
+            prompt_2a,
+            max_json_attempts=3,
+            normalizer=_normalize_and_build_2a,
+            required_hint=(
+                f"JSON matching SimulationSpec for engine '{deconstructed.recommended_engine.value}': "
+                "title, visual_archetype, variables, formula_expression, result_symbol, constants, steps, nodes, challenge_items."
+            ),
+            agent_label="Agent 2A: SimMathArchitect",
         )
-    else:
-        spec_data["visual_archetype"] = raw_arch
-
-    spec_data.pop("scenegraph_2d", None)
+    except Exception as exc:
+        if is_non_retryable_provider_error(exc):
+            raise
+        logger.warning(f"[Pair 2] Agent 2A exhausted retries ({exc}); engaging deterministic spec fallback.")
+        spec_data = _normalize_and_build_2a({
+            "title": deconstructed.core_concept[:60],
+            "variables": list(deconstructed.key_variables),
+            "formula_expression": deconstructed.target_equation_or_steps or "Y = X",
+        })
 
     spec = SimulationSpec(**spec_data)
 

@@ -355,8 +355,7 @@ def get_model(model_id: str | None = None, api_key: str | None = None):
     2. Universal OpenAI-Compatible API Key Mode:
        - Supports:
          a) AWS Bedrock Mantle Bearer Keys (with OPENAI_BASE_URL="https://bedrock-mantle.<region>.api.aws/v1")
-         b) Native DeepSeek Platform Keys (sk-... with https://api.deepseek.com or custom base URL)
-         c) Standard OpenAI Keys (sk-... with official OpenAI endpoint)
+         b) Standard OpenAI / OpenAI-Compatible Keys (sk-... with official OpenAI or custom OPENAI_BASE_URL)
        - If LUMINA_MOCK_MODE=False and (api_key or config.BEDROCK_API_KEY):
          Uses strands.models.openai.OpenAIModel with dynamic client_args (base_url, api_key).
 
@@ -373,6 +372,10 @@ def get_model(model_id: str | None = None, api_key: str | None = None):
     if resolved_model_id and resolved_model_id.startswith("bedrock:"):
         resolved_model_id = resolved_model_id.split("bedrock:", 1)[1]
 
+    # Keep reasoning-locked models free of unsupported sampling overrides; stabilize JSON/tool models with low temperature
+    model_id_lower = (resolved_model_id or "").lower()
+    is_reasoning_locked = any(tok in model_id_lower for tok in ("o1-", "o3-", "o4-"))
+
     # Use OpenAIModel when an explicit base URL is configured or when using native platform keys (sk-*)
     use_openai = bool(config.LLM_BASE_URL or (resolved_api_key and resolved_api_key.startswith("sk-")))
 
@@ -383,10 +386,14 @@ def get_model(model_id: str | None = None, api_key: str | None = None):
         if config.LLM_BASE_URL:
             client_args["base_url"] = config.LLM_BASE_URL
 
-        return OpenAIModel(
-            model_id=resolved_model_id,
-            client_args=client_args,
-        )
+        openai_kwargs: dict[str, Any] = {
+            "model_id": resolved_model_id,
+            "client_args": client_args,
+        }
+        if not is_reasoning_locked:
+            openai_kwargs["params"] = {"temperature": 0.2}
+
+        return OpenAIModel(**openai_kwargs)
     else:
         from strands.models.bedrock import BedrockModel
         model_kwargs: dict[str, Any] = {
@@ -395,5 +402,7 @@ def get_model(model_id: str | None = None, api_key: str | None = None):
         }
         if resolved_api_key:
             model_kwargs["api_key"] = resolved_api_key
+        if not is_reasoning_locked:
+            model_kwargs["temperature"] = 0.2
         return BedrockModel(**model_kwargs)
 

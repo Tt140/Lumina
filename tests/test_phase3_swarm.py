@@ -65,18 +65,17 @@ def test_mock_model_callable():
 def test_get_model_bedrock_api_key_mode(monkeypatch):
     """Verify that get_model correctly initializes BedrockModel with Bearer API Key without IAM."""
     monkeypatch.setenv("LUMINA_MOCK_MODE", "false")
-    monkeypatch.setenv("DEEPSEEK_API_KEY", "bedrock-api-key-test-token")
-    monkeypatch.setenv("DEEPSEEK_PRO_MODEL", "bedrock:deepseek.v3.2")
+    monkeypatch.setenv("BEDROCK_API_KEY", "bedrock-api-key-test-token")
+    monkeypatch.setenv("BEDROCK_MODEL_ID", "bedrock:us.amazon.nova-pro-v1:0")
     monkeypatch.delenv("OPENAI_BASE_URL", raising=False)
     monkeypatch.delenv("LLM_BASE_URL", raising=False)
-    monkeypatch.delenv("DEEPSEEK_BASE_URL", raising=False)
     from src.config import get_config
     get_config(reload=True)
 
     from strands.models.bedrock import BedrockModel
     model = get_model()
     assert isinstance(model, BedrockModel)
-    assert model.config["model_id"] == "deepseek.v3.2"
+    assert model.config["model_id"] == "us.amazon.nova-pro-v1:0"
 
     # Reset environment back to mock mode
     monkeypatch.setenv("LUMINA_MOCK_MODE", "true")
@@ -86,8 +85,8 @@ def test_get_model_bedrock_api_key_mode(monkeypatch):
 def test_get_model_openai_mantle_mode(monkeypatch):
     """Verify that get_model correctly initializes OpenAIModel when OPENAI_BASE_URL is provided."""
     monkeypatch.setenv("LUMINA_MOCK_MODE", "false")
-    monkeypatch.setenv("DEEPSEEK_API_KEY", "bedrock-api-key-test-token")
-    monkeypatch.setenv("DEEPSEEK_PRO_MODEL", "deepseek.v3.2")
+    monkeypatch.setenv("BEDROCK_API_KEY", "bedrock-api-key-test-token")
+    monkeypatch.setenv("BEDROCK_MODEL_ID", "mistral.mistral-large-3-675b-instruct")
     monkeypatch.setenv("OPENAI_BASE_URL", "https://bedrock-mantle.us-east-1.api.aws/v1")
     from src.config import get_config
     get_config(reload=True)
@@ -95,7 +94,7 @@ def test_get_model_openai_mantle_mode(monkeypatch):
     from strands.models.openai import OpenAIModel
     model = get_model()
     assert isinstance(model, OpenAIModel)
-    assert model.config["model_id"] == "deepseek.v3.2"
+    assert model.config["model_id"] == "mistral.mistral-large-3-675b-instruct"
     assert model.client_args.get("base_url") == "https://bedrock-mantle.us-east-1.api.aws/v1"
 
     # Reset environment back to mock mode
@@ -103,21 +102,20 @@ def test_get_model_openai_mantle_mode(monkeypatch):
     get_config(reload=True)
 
 
-def test_get_model_deepseek_platform_mode(monkeypatch):
-    """Verify that get_model correctly initializes OpenAIModel for native DeepSeek sk-* keys."""
+def test_get_model_openai_compatible_mode(monkeypatch):
+    """Verify that get_model correctly initializes OpenAIModel for native sk-* keys."""
     monkeypatch.setenv("LUMINA_MOCK_MODE", "false")
-    monkeypatch.setenv("DEEPSEEK_API_KEY", "sk-mock-testing-key-placeholder-00000000")
-    monkeypatch.setenv("DEEPSEEK_PRO_MODEL", "deepseek-chat")
-    monkeypatch.delenv("OPENAI_BASE_URL", raising=False)
-    monkeypatch.delenv("LLM_BASE_URL", raising=False)
+    monkeypatch.setenv("BEDROCK_API_KEY", "sk-mock-testing-key-placeholder-00000000")
+    monkeypatch.setenv("BEDROCK_MODEL_ID", "gpt-4o-mini")
+    monkeypatch.setenv("OPENAI_BASE_URL", "https://api.openai.com/v1")
     from src.config import get_config
     get_config(reload=True)
 
     from strands.models.openai import OpenAIModel
     model = get_model()
     assert isinstance(model, OpenAIModel)
-    assert model.config["model_id"] == "deepseek-chat"
-    assert model.client_args.get("base_url") == "https://api.deepseek.com"
+    assert model.config["model_id"] == "gpt-4o-mini"
+    assert model.client_args.get("base_url") == "https://api.openai.com/v1"
 
     # Reset environment back to mock mode
     monkeypatch.setenv("LUMINA_MOCK_MODE", "true")

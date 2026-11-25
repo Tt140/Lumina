@@ -35,10 +35,10 @@ class TestErrorClassification:
         res = translate_swarm_error(exc)
         assert res["error_code"] == "AUTH_TOKEN_EXPIRED"
         assert "صلاحية" in res["title_ar"]
-        assert "DEEPSEEK_API_KEY" in res["hint_ar"]
+        assert "BEDROCK_API_KEY" in res["hint_ar"]
 
     def test_auth_missing_key(self):
-        exc = Exception("DEEPSEEK_API_KEY is not set in environment.")
+        exc = Exception("BEDROCK_API_KEY is not set in environment.")
         res = translate_swarm_error(exc)
         assert res["error_code"] == "AUTH_KEY_MISSING"
         assert "غير متوفر" in res["title_ar"]

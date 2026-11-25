@@ -383,6 +383,87 @@ def test_offline_viewer_launch_preserves_contract_fields():
     assert "Buffer Lab" in res["verifiedLabHtml"]
 
 
+def test_offline_viewer_launch_normalizes_core_stem_labs():
+    """Verify Core STEM Labs with localized {en, ar} accessibility maps normalize into arrays and flat strings."""
+    node_script = f"""
+    global.window = global;
+    let capturedServerData = null;
+    let viewSwitchedTo = null;
+    let modeSwitchedTo = null;
+
+    global.setLastServerData = (data) => {{ capturedServerData = data; }};
+    global.populateGeneratedOutputs = () => {{}};
+    global.switchMode = (m) => {{ modeSwitchedTo = m; }};
+    global.switchView = (v) => {{ viewSwitchedTo = v; }};
+    global.showToast = () => {{}};
+    global.currentLang = "en";
+
+    const corePendulum = {{
+        id: "core_pendulum",
+        isCore: true,
+        subjectEn: "Physics",
+        subjectAr: "الفيزياء",
+        gradeEn: "Grade 7",
+        gradeAr: "الصف السابع",
+        titleEn: "Simple Harmonic Pendulum",
+        titleAr: "معمل البندول التوافقي البسيط",
+        engine: "SLIDER ENGINE (SANDBOXED)",
+        formula: "T = 2*pi*sqrt(L/g)",
+        accessibility: {{
+            adhd_steps: {{
+                en: [
+                    {{ title: "Step 1", desc: "Adjust string length." }},
+                    {{ title: "Step 2", desc: "Change gravity." }}
+                ],
+                ar: [
+                    {{ title: "الخطوة 1", desc: "عدل طول الخيط." }}
+                ]
+            }},
+            bionic: {{ en: "<b>Sim</b>ple <b>pen</b>dulum", ar: "<b>بندول</b> بسيط" }},
+            kitchen: {{ en: "Tie a key to a string.", ar: "اربط مفتاحاً بخيط." }},
+            voice_script: {{ en: "Pendulum narration.", ar: "شرح البندول." }},
+            audio_url: {{ en: "/api/audio/core_pendulum_en.mp3", ar: "/api/audio/core_pendulum_ar.mp3" }}
+        }},
+        challenge: {{
+            qEn: "Moon vs Earth period?",
+            hEn: "Check g in denominator.",
+            aEn: "Period increases on the Moon."
+        }},
+        getHtml: (isAr) => isAr ? "<div>AR</div>" : "<div>EN</div>"
+    }};
+
+    global.CORE_LABS = [corePendulum];
+    global.getStoredVault = () => [];
+
+    require("{OFFLINE_VIEWER_JS}");
+    global.launchVaultLab("core_pendulum");
+
+    console.log(JSON.stringify({{
+        modeSwitchedTo,
+        viewSwitchedTo,
+        stepsIsArray: Array.isArray(capturedServerData.accessibility.adhd_steps),
+        stepsLen: capturedServerData.accessibility.adhd_steps.length,
+        firstDesc: capturedServerData.accessibility.adhd_steps[0].description,
+        bionic: capturedServerData.accessibility.bionic_reading_html,
+        kitchen: capturedServerData.accessibility.kitchen_lab,
+        question: capturedServerData.challenge.challenge_question,
+        audioUrl: capturedServerData.accessibility.voice_audio_url,
+        html: capturedServerData.verified_lab.html_content
+    }}));
+    """
+    res = run_node_eval(node_script)
+    assert res["modeSwitchedTo"] == "offline"
+    assert res["viewSwitchedTo"] == "lab"
+    assert res["stepsIsArray"] is True
+    assert res["stepsLen"] == 2
+    assert res["firstDesc"] == "Adjust string length."
+    assert res["bionic"] == "<b>Sim</b>ple <b>pen</b>dulum"
+    assert res["kitchen"] == "Tie a key to a string."
+    assert res["question"] == "Moon vs Earth period?"
+    assert res["audioUrl"] == "/api/audio/core_pendulum_en.mp3"
+    assert res["html"] == "<div>EN</div>"
+
+
 # ============================================================================
 # 4. Full Pipeline Integration: Engine -> Standalone Package Parity
 # ============================================================================

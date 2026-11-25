@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LuminaLab Swarm | Ledger Reliability Inspector</title>
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <link rel="stylesheet" href="/static/css/audit.css?v=1.0">
+</head>
+
+<body>
+  <!-- TOP CONTROL BAR -->
+  <header class="topbar">
+    <div class="topbar-left">
+      <div class="brand-mark" aria-hidden="true">AWS</div>
+      <div class="brand-titles">
+        <span class="brand-name">LuminaLab Swarm</span>
+        <span class="brand-sep">/</span>
+        <span class="brand-sub">Ledger Reliability Inspector</span>
+      </div>
+    </div>
+
+    <div class="topbar-center" role="group" aria-label="Benchmark Snapshot Mode">
+      <button type="button" class="mode-btn" id="btn-view-v1" data-mode="v1">
+        v1-before (Baseline)
+      </button>
+      <button type="button" class="mode-btn active" id="btn-view-v2" data-mode="v2">
+        v2-after (Remediated)
+      </button>
+      <button type="button" class="mode-btn" id="btn-view-delta" data-mode="delta">
+        Delta Matrix
+      </button>
+    </div>
+
+    <div class="topbar-right">
+      <span class="meta-pill" id="env-badge">Loading AWS context...</span>
+      <a class="nav-link" href="/">Student Studio</a>
+    </div>
+  </header>
+
+  <!-- MAIN TWO-COLUMN ENGINEERING WORKSPACE -->
+  <main class="workspace">
+    <!-- LEFT COLUMN: COMPARISON MATRIX + TRADE-OFFS + LIVE PROBES -->
+    <section class="col-left">
+      <article class="panel">
+        <div class="panel-header">
+          <div>
+            <div class="eyebrow">MEASURED BENCHMARK ARTIFACTS</div>
+            <h2 class="panel-title">Apples-to-Apples Snapshot Comparison</h2>
+          </div>
+          <span class="mono-tag" id="benchmark-source-tag">results/before_v1.json &amp; after_v2.json</span>
+        </div>
+
+        <div class="table-wrap">
+          <table class="data-table" id="comparison-table">
+            <thead>
+              <tr>
+                <th>Metric</th>
+                <th>v1-before</th>
+                <th>v2-after</th>
+                <th>Delta</th>
+              </tr>
+            </thead>
+            <tbody id="comparison-tbody">
+              <tr>
+                <td colspan="4" class="muted-cell">Loading measured JSON snapshots...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </article>
+
+      <article class="panel">
+        <div class="panel-header">
+          <div>
+            <div class="eyebrow">HONEST ARCHITECTURAL ASSESSMENT</div>
+            <h2 class="panel-title">Measured Write &amp; Cost Trade-offs</h2>
+          </div>
+          <span class="mono-tag">TransactWriteItems + KMS/CW</span>
+        </div>
+
+        <div class="tradeoff-grid" id="tradeoffs-container">
+          <div class="muted-cell">Waiting for JSON payload...</div>
+        </div>
+      </article>
+
+      <article class="panel">
+        <div class="panel-header">
+          <div>
+            <div class="eyebrow">REAL-TIME SERVER &amp; AWS EXECUTION</div>
+            <h2 class="panel-title">Live AWS Probe Console</h2>
+          </div>
+          <span class="mono-tag" id="probe-target-table">Table: --</span>
+        </div>
+
+        <div class="probe-actions">
+          <button type="button" class="action-btn primary" id="btn-stats-probe">
+            Probe /api/stats (GetItem O(1))
+          </button>
+          <button type="button" class="action-btn accent" id="btn-idem-probe">
+            Run Idempotency Probe (2x Send)
+          </button>
+          <button type="button" class="action-btn subtle" id="btn-cleanup-probe">
+            Cleanup Probe Records
+          </button>
+          <button type="button" class="action-btn subtle" id="btn-refresh-infra">
+            Refresh AWS Stack &amp; Alarms
+          </button>
+        </div>
+
+        <div class="probe-output" id="probe-output-box">
+          <div class="probe-placeholder">
+            Click a probe button above to execute a live DynamoDB or CloudWatch call against AWS.
+          </div>
+        </div>
+      </article>
+    </section>
+
+    <!-- RIGHT COLUMN: VERDICT + LARGE MONOSPACE METRICS + LIVE INFRASTRUCTURE -->
+    <section class="col-right">
+      <article class="panel verdict-panel" id="verdict-card">
+        <div class="verdict-top">
+          <div>
+            <div class="eyebrow">ARCHITECTURAL RELIABILITY VERDICT</div>
+            <h1 class="verdict-headline" id="verdict-title">LOADING SNAPSHOT</h1>
+            <p class="verdict-desc" id="verdict-subtitle">
+              Reading empirical DynamoDB and jitter telemetry from benchmark artifacts.
+            </p>
+          </div>
+          <span class="verdict-badge" id="verdict-badge">--</span>
+        </div>
+
+        <div class="kpi-grid">
+          <div class="kpi-card">
+            <div class="kpi-label">RETURNED / GROUND TRUTH</div>
+            <div class="kpi-value" id="kpi-accuracy">--</div>
+            <div class="kpi-sub" id="kpi-accuracy-sub">--</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">READ CAPACITY (RCU / CALL)</div>
+            <div class="kpi-value" id="kpi-rcu">--</div>
+            <div class="kpi-sub" id="kpi-rcu-sub">--</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">READ LATENCY P50 / P95</div>
+            <div class="kpi-value" id="kpi-latency">--</div>
+            <div class="kpi-sub" id="kpi-latency-sub">--</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">JITTER LOSS AFTER RESTART</div>
+            <div class="kpi-value" id="kpi-loss">--</div>
+            <div class="kpi-sub" id="kpi-loss-sub">--</div>
+          </div>
+        </div>
+      </article>
+
+      <article class="panel" id="infra-panel">
+        <div class="panel-header">
+          <div>
+            <div class="eyebrow" id="infra-eyebrow">LIVE AWS CONTROL PLANE</div>
+            <h2 class="panel-title" id="infra-panel-title">IAM Least-Privilege &amp; CloudWatch Alarms</h2>
+          </div>
+          <span class="mono-tag" id="infra-stack-status">Stack: --</span>
+        </div>
+
+        <div class="infra-summary-grid">
+          <div class="infra-stat">
+            <div class="kpi-label">IAM DYNAMODB ACTIONS</div>
+            <div class="infra-stat-val mono" id="infra-iam-actions">--</div>
+            <div class="kpi-sub" id="infra-scan-badge">--</div>
+          </div>
+          <div class="infra-stat">
+            <div class="kpi-label">CLOUDWATCH LOG GROUP</div>
+            <div class="infra-stat-val mono" id="infra-log-group">--</div>
+            <div class="kpi-sub" id="infra-log-retention">--</div>
+          </div>
+          <div class="infra-stat">
+            <div class="kpi-label">OPERATIONAL SNS TOPIC</div>
+            <div class="infra-stat-val mono" id="infra-sns-topic">--</div>
+            <div class="kpi-sub" id="infra-sns-kms">--</div>
+          </div>
+        </div>
+
+        <div class="table-wrap" style="margin-top: 14px;">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>CloudWatch Alarm</th>
+                <th>Metric(s)</th>
+                <th>Threshold / Period</th>
+                <th>Live State</th>
+              </tr>
+            </thead>
+            <tbody id="alarms-tbody">
+              <tr>
+                <td colspan="4" class="muted-cell">Querying live CloudWatch alarms...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </article>
+    </section>
+  </main>
+
+  <!-- BOTTOM LIVE TELEMETRY FEED -->
+  <footer class="telemetry-dock">
+    <div class="telemetry-header">
+      <div class="telemetry-title">
+        <span class="aws-dot" aria-hidden="true"></span>
+        <span>LIVE TELEMETRY FEED (REAL API &amp; AWS OPERATIONS)</span>
+      </div>
+      <button type="button" class="clear-log-btn" id="btn-clear-log">Clear Feed</button>
+    </div>
+    <div class="telemetry-log" id="telemetry-log" role="log" aria-live="polite"></div>
+  </footer>
+
+  <script src="/static/js/audit.js?v=1.0"></script>
+</body>
+
+</html>

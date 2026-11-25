@@ -1785,6 +1785,7 @@ def render_slider_lab(spec: SimulationSpec) -> str:
     all_syms = [v.get("symbol", "") for v in spec.variables if v.get("symbol")]
 
     is_equilibrium = False
+    lhs_cand = ""
     lhs_expr = ""
     rhs_expr = clean_formula
     result_symbol = "Result"

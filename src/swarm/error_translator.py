@@ -17,7 +17,7 @@ def sanitize_error_text(text: str) -> str:
     """
     if not text or not isinstance(text, str):
         return ""
-    # Strip OpenAI / DeepSeek style keys
+    # Strip API keys
     scrubbed = re.sub(r'sk-[a-zA-Z0-9_\-]{8,}', '[REDACTED_API_KEY]', text)
     # Strip AWS access keys
     scrubbed = re.sub(r'AKIA[0-9A-Z]{16}', '[REDACTED_AWS_KEY]', scrubbed)
@@ -62,15 +62,15 @@ def translate_swarm_error(exc: Exception, raw_text: str = "") -> dict[str, Any]:
             "error_code": "AUTH_TOKEN_EXPIRED",
             "title": "API Session Token Expired",
             "title_ar": "انتهت صلاحية جلسة مفتاح الذكاء الاصطناعي",
-            "message": "The temporary security credentials/session token used to call DeepSeek or AWS Bedrock has expired.",
-            "message_ar": "انتهت صلاحية رمز الجلسة المؤقت (Security Token) المستخدم للاتصال بنموذج DeepSeek أو AWS Bedrock.",
-            "hint": "Please update or renew DEEPSEEK_API_KEY or AWS session token in your .env file and re-run.",
-            "hint_ar": "يرجى تجديد رمز الجلسة أو مفتاح DEEPSEEK_API_KEY في ملف .env ثم إعادة المحاولة."
+            "message": "The temporary security credentials/session token used to call AWS Bedrock has expired.",
+            "message_ar": "انتهت صلاحية رمز الجلسة المؤقت (Security Token) المستخدم للاتصال بخدمة AWS Bedrock.",
+            "hint": "Please update or renew BEDROCK_API_KEY or AWS session token in your .env file and re-run.",
+            "hint_ar": "يرجى تجديد رمز الجلسة أو مفتاح BEDROCK_API_KEY في ملف .env ثم إعادة المحاولة."
         }
 
     # 2. Missing API Key / Credentials
     if any(k in combined for k in [
-        "DEEPSEEK_API_KEY is not set",
+        "BEDROCK_API_KEY is not set",
         "No API key provided",
         "Missing credentials",
         "UnrecognizedClientException",
@@ -84,8 +84,8 @@ def translate_swarm_error(exc: Exception, raw_text: str = "") -> dict[str, Any]:
             "title_ar": "مفتاح API غير متوفر أو غير صالح",
             "message": "No valid API key was found in the environment to connect to the model provider.",
             "message_ar": "لم يتم العثور على مفتاح API صالح في بيئة التشغيل للاتصال بمزود الذكاء الاصطناعي.",
-            "hint": "Verify that DEEPSEEK_API_KEY is configured in your .env file.",
-            "hint_ar": "تأكد من كتابة متغير DEEPSEEK_API_KEY بشكل سليم في ملف .env."
+            "hint": "Verify that BEDROCK_API_KEY is configured in your .env file.",
+            "hint_ar": "تأكد من كتابة متغير BEDROCK_API_KEY بشكل سليم في ملف .env."
         }
 
     # 3. Rate Limit / Quota Exceeded
@@ -130,10 +130,10 @@ def translate_swarm_error(exc: Exception, raw_text: str = "") -> dict[str, Any]:
             "error_code": "MODEL_ROUTING_MISMATCH",
             "title": "Model Routing Incompatibility",
             "title_ar": "عدم توافق في توجيه طلب الموديل",
-            "message": "The DeepSeek model cannot be invoked via Bedrock converse-stream directly without the OpenAI Mantle endpoint.",
-            "message_ar": "لا يمكن استدعاء موديل DeepSeek عبر converse-stream المباشر دون نقطة وصول Mantle المتوافقة مع OpenAI.",
-            "hint": "Ensure DEEPSEEK_API_KEY is supplied so the system routes via the Mantle endpoint.",
-            "hint_ar": "تأكد من تعبئة DEEPSEEK_API_KEY لتوجيه الطلب عبر Mantle Endpoint المتوافق."
+            "message": "The selected Bedrock model cannot be invoked via converse-stream directly without the OpenAI Mantle endpoint.",
+            "message_ar": "لا يمكن استدعاء هذا الموديل عبر converse-stream المباشر دون نقطة وصول Bedrock Mantle المتوافقة مع OpenAI.",
+            "hint": "Ensure BEDROCK_API_KEY and OPENAI_BASE_URL are supplied so requests route via Bedrock Mantle.",
+            "hint_ar": "تأكد من تعبئة BEDROCK_API_KEY و OPENAI_BASE_URL لتوجيه الطلب عبر Mantle Endpoint المتوافق."
         }
 
     # 6. Fallback / Generic Error

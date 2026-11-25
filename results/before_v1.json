@@ -1,0 +1,548 @@
+{
+  "metadata": {
+    "mode": "v1-before",
+    "run_id": "57d382b7",
+    "timestamp_utc": "2026-11-24T01:58:53.952824+00:00",
+    "region": "us-east-1",
+    "stack_name": "LuminaLab-Swarm-Stack",
+    "table_name": "LuminaLab-Swarm-Stack-LuminaLabImpactTable-VT5UIOJUREZY",
+    "pre_benchmark_table_item_count": 0,
+    "seed": 20261124
+  },
+  "axis_1_scale_and_truncation": {
+    "write_phase": {
+      "target_mb_binary": 1.45,
+      "bytes_per_item_utf8_payload": 219,
+      "target_items": 6943,
+      "confirmed_written_items": 6943,
+      "total_table_items_during_read": 6943,
+      "estimated_total_bytes": 1520517,
+      "estimated_total_mib": 1.4501,
+      "estimated_total_mb_decimal": 1.5205,
+      "write_wall_sec": 36.366,
+      "write_latency_ms": {
+        "min": 130.373,
+        "mean": 156.095,
+        "p50": 138.438,
+        "p95": 247.787,
+        "p99": 533.589,
+        "max": 946.411
+      },
+      "put_item_calls_tracked": 6942,
+      "update_item_calls_tracked": 0,
+      "total_consumed_wcu": 6942.0,
+      "seeding_transient_timeout_fallbacks": 13
+    },
+    "read_phase": {
+      "iterations": 10,
+      "ledger_client_config": {
+        "connect_timeout_sec": 0.6,
+        "read_timeout_sec": 0.6,
+        "retries": {
+          "total_max_attempts": 1,
+          "mode": "legacy"
+        }
+      },
+      "per_call_runs": [
+        {
+          "iteration": 1,
+          "returned_total_sessions": 4604,
+          "ground_truth_table_count": 6943,
+          "missing_records_count": 2339,
+          "truncation_error_pct": 33.689,
+          "last_evaluated_key_returned": true,
+          "final_page_unfollowed_last_evaluated_key": true,
+          "dynamodb_operations": [
+            "Scan"
+          ],
+          "sdk_api_calls": 1,
+          "scanned_count": 4604,
+          "returned_item_count": 4604,
+          "consumed_rcu": 129.0,
+          "latency_ms": 3702.751,
+          "stats_source": null
+        },
+        {
+          "iteration": 2,
+          "returned_total_sessions": 4604,
+          "ground_truth_table_count": 6943,
+          "missing_records_count": 2339,
+          "truncation_error_pct": 33.689,
+          "last_evaluated_key_returned": true,
+          "final_page_unfollowed_last_evaluated_key": true,
+          "dynamodb_operations": [
+            "Scan"
+          ],
+          "sdk_api_calls": 1,
+          "scanned_count": 4604,
+          "returned_item_count": 4604,
+          "consumed_rcu": 129.0,
+          "latency_ms": 2656.22,
+          "stats_source": null
+        },
+        {
+          "iteration": 3,
+          "returned_total_sessions": 4604,
+          "ground_truth_table_count": 6943,
+          "missing_records_count": 2339,
+          "truncation_error_pct": 33.689,
+          "last_evaluated_key_returned": true,
+          "final_page_unfollowed_last_evaluated_key": true,
+          "dynamodb_operations": [
+            "Scan"
+          ],
+          "sdk_api_calls": 1,
+          "scanned_count": 4604,
+          "returned_item_count": 4604,
+          "consumed_rcu": 129.0,
+          "latency_ms": 4012.201,
+          "stats_source": null
+        },
+        {
+          "iteration": 4,
+          "returned_total_sessions": 4604,
+          "ground_truth_table_count": 6943,
+          "missing_records_count": 2339,
+          "truncation_error_pct": 33.689,
+          "last_evaluated_key_returned": true,
+          "final_page_unfollowed_last_evaluated_key": true,
+          "dynamodb_operations": [
+            "Scan"
+          ],
+          "sdk_api_calls": 1,
+          "scanned_count": 4604,
+          "returned_item_count": 4604,
+          "consumed_rcu": 129.0,
+          "latency_ms": 2950.464,
+          "stats_source": null
+        },
+        {
+          "iteration": 5,
+          "returned_total_sessions": 4604,
+          "ground_truth_table_count": 6943,
+          "missing_records_count": 2339,
+          "truncation_error_pct": 33.689,
+          "last_evaluated_key_returned": true,
+          "final_page_unfollowed_last_evaluated_key": true,
+          "dynamodb_operations": [
+            "Scan"
+          ],
+          "sdk_api_calls": 1,
+          "scanned_count": 4604,
+          "returned_item_count": 4604,
+          "consumed_rcu": 129.0,
+          "latency_ms": 3643.184,
+          "stats_source": null
+        },
+        {
+          "iteration": 6,
+          "returned_total_sessions": 4604,
+          "ground_truth_table_count": 6943,
+          "missing_records_count": 2339,
+          "truncation_error_pct": 33.689,
+          "last_evaluated_key_returned": true,
+          "final_page_unfollowed_last_evaluated_key": true,
+          "dynamodb_operations": [
+            "Scan"
+          ],
+          "sdk_api_calls": 1,
+          "scanned_count": 4604,
+          "returned_item_count": 4604,
+          "consumed_rcu": 129.0,
+          "latency_ms": 3307.791,
+          "stats_source": null
+        },
+        {
+          "iteration": 7,
+          "returned_total_sessions": 4604,
+          "ground_truth_table_count": 6943,
+          "missing_records_count": 2339,
+          "truncation_error_pct": 33.689,
+          "last_evaluated_key_returned": true,
+          "final_page_unfollowed_last_evaluated_key": true,
+          "dynamodb_operations": [
+            "Scan"
+          ],
+          "sdk_api_calls": 1,
+          "scanned_count": 4604,
+          "returned_item_count": 4604,
+          "consumed_rcu": 129.0,
+          "latency_ms": 2782.967,
+          "stats_source": null
+        },
+        {
+          "iteration": 8,
+          "returned_total_sessions": 4604,
+          "ground_truth_table_count": 6943,
+          "missing_records_count": 2339,
+          "truncation_error_pct": 33.689,
+          "last_evaluated_key_returned": true,
+          "final_page_unfollowed_last_evaluated_key": true,
+          "dynamodb_operations": [
+            "Scan"
+          ],
+          "sdk_api_calls": 1,
+          "scanned_count": 4604,
+          "returned_item_count": 4604,
+          "consumed_rcu": 129.0,
+          "latency_ms": 2583.777,
+          "stats_source": null
+        },
+        {
+          "iteration": 9,
+          "returned_total_sessions": 4604,
+          "ground_truth_table_count": 6943,
+          "missing_records_count": 2339,
+          "truncation_error_pct": 33.689,
+          "last_evaluated_key_returned": true,
+          "final_page_unfollowed_last_evaluated_key": true,
+          "dynamodb_operations": [
+            "Scan"
+          ],
+          "sdk_api_calls": 1,
+          "scanned_count": 4604,
+          "returned_item_count": 4604,
+          "consumed_rcu": 129.0,
+          "latency_ms": 2776.754,
+          "stats_source": null
+        },
+        {
+          "iteration": 10,
+          "returned_total_sessions": 4604,
+          "ground_truth_table_count": 6943,
+          "missing_records_count": 2339,
+          "truncation_error_pct": 33.689,
+          "last_evaluated_key_returned": true,
+          "final_page_unfollowed_last_evaluated_key": true,
+          "dynamodb_operations": [
+            "Scan"
+          ],
+          "sdk_api_calls": 1,
+          "scanned_count": 4604,
+          "returned_item_count": 4604,
+          "consumed_rcu": 129.0,
+          "latency_ms": 2929.528,
+          "stats_source": null
+        }
+      ],
+      "summary": {
+        "ground_truth_count": 6943,
+        "returned_sessions_min": 4604,
+        "returned_sessions_max": 4604,
+        "returned_sessions_mean": 4604.0,
+        "missing_records_mean": 2339.0,
+        "truncation_error_pct_mean": 33.689,
+        "last_evaluated_key_present_calls": 10,
+        "unfollowed_last_evaluated_key_calls": 10,
+        "scanned_count_per_call_mean": 4604.0,
+        "scanned_count_total_all_calls": 46040,
+        "consumed_rcu_per_call_mean": 129.0,
+        "consumed_rcu_per_call_p50": 129.0,
+        "consumed_rcu_total_all_calls": 1290.0,
+        "read_latency_ms": {
+          "min": 2583.777,
+          "mean": 3134.564,
+          "p50": 2939.996,
+          "p95": 3872.948,
+          "p99": 3984.351,
+          "max": 4012.201
+        }
+      }
+    }
+  },
+  "axis_2_jitter_and_false_success": {
+    "jitter_config": {
+      "attempts": 10,
+      "jitter_min_ms": 700.0,
+      "jitter_max_ms": 900.0,
+      "client_connect_timeout_sec": 0.6,
+      "client_read_timeout_sec": 0.6,
+      "client_retries": {
+        "total_max_attempts": 1,
+        "mode": "legacy"
+      }
+    },
+    "attempts_detail": [
+      {
+        "attempt": 1,
+        "session_id": "bench-v1-before-57d382b7-jitter-01",
+        "returned_status": "recorded_local_fallback",
+        "returned_error": "Read timeout on endpoint URL: \"https://dynamodb.us-east-1.amazonaws.com/\"",
+        "latency_ms": 602.094,
+        "sdk_http_attempts": 1,
+        "injected_jitter_ms": [
+          864.78
+        ],
+        "buffered_in_local_store": true,
+        "confirmed_in_aws_dynamodb": false
+      },
+      {
+        "attempt": 2,
+        "session_id": "bench-v1-before-57d382b7-jitter-02",
+        "returned_status": "recorded_local_fallback",
+        "returned_error": "Read timeout on endpoint URL: \"https://dynamodb.us-east-1.amazonaws.com/\"",
+        "latency_ms": 600.948,
+        "sdk_http_attempts": 1,
+        "injected_jitter_ms": [
+          835.06
+        ],
+        "buffered_in_local_store": true,
+        "confirmed_in_aws_dynamodb": false
+      },
+      {
+        "attempt": 3,
+        "session_id": "bench-v1-before-57d382b7-jitter-03",
+        "returned_status": "recorded_local_fallback",
+        "returned_error": "Read timeout on endpoint URL: \"https://dynamodb.us-east-1.amazonaws.com/\"",
+        "latency_ms": 601.181,
+        "sdk_http_attempts": 1,
+        "injected_jitter_ms": [
+          700.68
+        ],
+        "buffered_in_local_store": true,
+        "confirmed_in_aws_dynamodb": false
+      },
+      {
+        "attempt": 4,
+        "session_id": "bench-v1-before-57d382b7-jitter-04",
+        "returned_status": "recorded_local_fallback",
+        "returned_error": "Read timeout on endpoint URL: \"https://dynamodb.us-east-1.amazonaws.com/\"",
+        "latency_ms": 600.971,
+        "sdk_http_attempts": 1,
+        "injected_jitter_ms": [
+          834.42
+        ],
+        "buffered_in_local_store": true,
+        "confirmed_in_aws_dynamodb": false
+      },
+      {
+        "attempt": 5,
+        "session_id": "bench-v1-before-57d382b7-jitter-05",
+        "returned_status": "recorded_local_fallback",
+        "returned_error": "Read timeout on endpoint URL: \"https://dynamodb.us-east-1.amazonaws.com/\"",
+        "latency_ms": 600.961,
+        "sdk_http_attempts": 1,
+        "injected_jitter_ms": [
+          838.31
+        ],
+        "buffered_in_local_store": true,
+        "confirmed_in_aws_dynamodb": false
+      },
+      {
+        "attempt": 6,
+        "session_id": "bench-v1-before-57d382b7-jitter-06",
+        "returned_status": "recorded_local_fallback",
+        "returned_error": "Read timeout on endpoint URL: \"https://dynamodb.us-east-1.amazonaws.com/\"",
+        "latency_ms": 601.396,
+        "sdk_http_attempts": 1,
+        "injected_jitter_ms": [
+          727.56
+        ],
+        "buffered_in_local_store": true,
+        "confirmed_in_aws_dynamodb": false
+      },
+      {
+        "attempt": 7,
+        "session_id": "bench-v1-before-57d382b7-jitter-07",
+        "returned_status": "recorded_local_fallback",
+        "returned_error": "Read timeout on endpoint URL: \"https://dynamodb.us-east-1.amazonaws.com/\"",
+        "latency_ms": 600.966,
+        "sdk_http_attempts": 1,
+        "injected_jitter_ms": [
+          821.22
+        ],
+        "buffered_in_local_store": true,
+        "confirmed_in_aws_dynamodb": false
+      },
+      {
+        "attempt": 8,
+        "session_id": "bench-v1-before-57d382b7-jitter-08",
+        "returned_status": "recorded_local_fallback",
+        "returned_error": "Read timeout on endpoint URL: \"https://dynamodb.us-east-1.amazonaws.com/\"",
+        "latency_ms": 601.024,
+        "sdk_http_attempts": 1,
+        "injected_jitter_ms": [
+          797.92
+        ],
+        "buffered_in_local_store": true,
+        "confirmed_in_aws_dynamodb": false
+      },
+      {
+        "attempt": 9,
+        "session_id": "bench-v1-before-57d382b7-jitter-09",
+        "returned_status": "recorded_local_fallback",
+        "returned_error": "Read timeout on endpoint URL: \"https://dynamodb.us-east-1.amazonaws.com/\"",
+        "latency_ms": 601.425,
+        "sdk_http_attempts": 1,
+        "injected_jitter_ms": [
+          732.54
+        ],
+        "buffered_in_local_store": true,
+        "confirmed_in_aws_dynamodb": false
+      },
+      {
+        "attempt": 10,
+        "session_id": "bench-v1-before-57d382b7-jitter-10",
+        "returned_status": "recorded_local_fallback",
+        "returned_error": "Read timeout on endpoint URL: \"https://dynamodb.us-east-1.amazonaws.com/\"",
+        "latency_ms": 601.028,
+        "sdk_http_attempts": 1,
+        "injected_jitter_ms": [
+          787.66
+        ],
+        "buffered_in_local_store": true,
+        "confirmed_in_aws_dynamodb": false
+      }
+    ],
+    "summary": {
+      "total_attempts": 10,
+      "returned_recorded_count": 0,
+      "returned_local_fallback_count": 10,
+      "confirmed_in_aws_dynamodb_count": 0,
+      "local_store_count_before_restart": 10,
+      "local_store_count_after_restart": 0,
+      "silently_lost_records_on_restart": 10,
+      "silent_data_loss_rate_pct": 100.0
+    },
+    "orchestrator_trace_audit": {
+      "session_id": "635242cd-8e6b-4e17-9a11-4a04d40eb22f",
+      "dynamo_receipt_status": "recorded_local_fallback",
+      "dynamo_receipt_error": "Read timeout on endpoint URL: \"https://dynamodb.us-east-1.amazonaws.com/\"",
+      "swarm_trace_aws_dynamodb": {
+        "agent_name": "AWS_DynamoDB",
+        "action": "record_impact",
+        "duration_ms": 601,
+        "status": "success"
+      },
+      "confirmed_in_aws_dynamodb": false,
+      "false_success_reported": true,
+      "orchestrator_injected_http_attempts": [
+        {
+          "injected_jitter_ms": 807.1,
+          "read_timeout_sec": 0.6,
+          "timed_out": true
+        }
+      ]
+    }
+  },
+  "axis_3_stack_and_iam_audit": {
+    "stack_name": "LuminaLab-Swarm-Stack",
+    "stack_status": "CREATE_COMPLETE",
+    "stack_resource_type_counts": {
+      "AWS::DynamoDB::Table": 1,
+      "AWS::IAM::ManagedPolicy": 1,
+      "AWS::S3::Bucket": 1
+    },
+    "stack_resources": [
+      {
+        "logical_id": "LuminaLabImpactTable",
+        "resource_type": "AWS::DynamoDB::Table",
+        "status": "CREATE_COMPLETE",
+        "physical_id": "LuminaLab-Swarm-Stack-LuminaLabImpactTable-VT5UIOJUREZY"
+      },
+      {
+        "logical_id": "LuminaLabSwarmPolicy",
+        "resource_type": "AWS::IAM::ManagedPolicy",
+        "status": "CREATE_COMPLETE",
+        "physical_id": "arn:aws:iam::<REDACTED_ACCOUNT_ID>:policy/LuminaLab-Swarm-Stack-LuminaLabSwarmPolicy-yw8xHJ7rtWRG"
+      },
+      {
+        "logical_id": "LuminaLabVaultBucket",
+        "resource_type": "AWS::S3::Bucket",
+        "status": "CREATE_COMPLETE",
+        "physical_id": "luminalab-swarm-stack-luminalabvaultbucket-ffb2ptbmnlac"
+      }
+    ],
+    "observability_resources_in_stack": {
+      "cloudwatch_alarms_count": 0,
+      "cloudwatch_log_groups_count": 0,
+      "sns_topics_count": 0,
+      "cloudwatch_dashboards_count": 0
+    },
+    "cloudwatch_live_matching_alarms_count": 0,
+    "cloudwatch_live_matching_alarms": [],
+    "iam_policy": {
+      "policy_arn": "arn:aws:iam::<REDACTED_ACCOUNT_ID>:policy/LuminaLab-Swarm-Stack-LuminaLabSwarmPolicy-yw8xHJ7rtWRG",
+      "all_actions": [
+        "bedrock:InvokeModel",
+        "bedrock:InvokeModelWithResponseStream",
+        "dynamodb:GetItem",
+        "dynamodb:PutItem",
+        "dynamodb:Scan",
+        "dynamodb:UpdateItem",
+        "polly:DescribeVoices",
+        "polly:SynthesizeSpeech",
+        "s3:GetObject",
+        "s3:ListBucket",
+        "s3:PutObject"
+      ],
+      "dynamodb_actions": [
+        "dynamodb:GetItem",
+        "dynamodb:PutItem",
+        "dynamodb:Scan",
+        "dynamodb:UpdateItem"
+      ],
+      "has_dynamodb_scan": true,
+      "statements": [
+        {
+          "Sid": "S3LabVaultAccess",
+          "Effect": "Allow",
+          "Action": [
+            "s3:PutObject",
+            "s3:GetObject",
+            "s3:ListBucket"
+          ],
+          "Resource": [
+            "arn:aws:s3:::luminalab-swarm-stack-luminalabvaultbucket-ffb2ptbmnlac",
+            "arn:aws:s3:::luminalab-swarm-stack-luminalabvaultbucket-ffb2ptbmnlac/*"
+          ]
+        },
+        {
+          "Sid": "DynamoImpactLedgerAccess",
+          "Effect": "Allow",
+          "Action": [
+            "dynamodb:PutItem",
+            "dynamodb:GetItem",
+            "dynamodb:Scan",
+            "dynamodb:UpdateItem"
+          ],
+          "Resource": [
+            "arn:aws:dynamodb:us-east-1:<REDACTED_ACCOUNT_ID>:table/LuminaLab-Swarm-Stack-LuminaLabImpactTable-VT5UIOJUREZY"
+          ]
+        },
+        {
+          "Sid": "AmazonPollySpeechAccess",
+          "Effect": "Allow",
+          "Action": [
+            "polly:SynthesizeSpeech",
+            "polly:DescribeVoices"
+          ],
+          "Resource": [
+            "*"
+          ]
+        },
+        {
+          "Sid": "BedrockInferenceAccess",
+          "Effect": "Allow",
+          "Action": [
+            "bedrock:InvokeModel",
+            "bedrock:InvokeModelWithResponseStream"
+          ],
+          "Resource": [
+            "*"
+          ]
+        }
+      ]
+    }
+  },
+  "axis_4_cleanup": {
+    "requested_dynamo_deletes": 6943,
+    "deleted_dynamo_items": 6943,
+    "deleted_s3_objects": [
+      "s3://luminalab-swarm-stack-luminalabvaultbucket-ffb2ptbmnlac/labs/635242cd-8e6b-4e17-9a11-4a04d40eb22f.html",
+      "s3://luminalab-swarm-stack-luminalabvaultbucket-ffb2ptbmnlac/audio/635242cd-8e6b-4e17-9a11-4a04d40eb22f.mp3"
+    ],
+    "post_cleanup_table_item_count": 0,
+    "cleanup_executed": true
+  }
+}

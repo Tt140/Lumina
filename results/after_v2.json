@@ -1,0 +1,643 @@
+{
+  "metadata": {
+    "mode": "v2-after",
+    "run_id": "855c23c9",
+    "timestamp_utc": "2026-11-24T02:22:40.105814+00:00",
+    "region": "us-east-1",
+    "stack_name": "LuminaLab-Swarm-Stack",
+    "table_name": "LuminaLab-Swarm-Stack-LuminaLabImpactTable-VT5UIOJUREZY",
+    "pre_benchmark_table_item_count": 0,
+    "seed": 20261124
+  },
+  "axis_1_scale_and_truncation": {
+    "write_phase": {
+      "target_mb_binary": 1.45,
+      "bytes_per_item_utf8_payload": 218,
+      "target_items": 6975,
+      "confirmed_written_items": 6975,
+      "total_table_items_during_read": 6975,
+      "estimated_total_bytes": 1520550,
+      "estimated_total_mib": 1.4501,
+      "estimated_total_mb_decimal": 1.5206,
+      "write_wall_sec": 71.077,
+      "write_latency_ms": {
+        "min": 141.409,
+        "mean": 302.208,
+        "p50": 157.181,
+        "p95": 758.248,
+        "p99": 1424.175,
+        "max": 2817.124
+      },
+      "put_item_calls_tracked": 6975,
+      "update_item_calls_tracked": 0,
+      "total_write_api_attempts": 11376,
+      "transaction_conflict_retries": 4401,
+      "total_consumed_wcu": 27900.0,
+      "seeding_transient_timeout_fallbacks": 13
+    },
+    "read_phase": {
+      "iterations": 10,
+      "ledger_client_config": {
+        "connect_timeout_sec": 2.0,
+        "read_timeout_sec": 5.0,
+        "retries": {
+          "total_max_attempts": 3,
+          "mode": "standard"
+        }
+      },
+      "per_call_runs": [
+        {
+          "iteration": 1,
+          "returned_total_sessions": 6975,
+          "ground_truth_table_count": 6975,
+          "missing_records_count": 0,
+          "truncation_error_pct": 0.0,
+          "last_evaluated_key_returned": false,
+          "final_page_unfollowed_last_evaluated_key": false,
+          "dynamodb_operations": [
+            "GetItem"
+          ],
+          "sdk_api_calls": 1,
+          "scanned_count": 0,
+          "returned_item_count": 0,
+          "consumed_rcu": 0.5,
+          "latency_ms": 612.813,
+          "stats_source": null
+        },
+        {
+          "iteration": 2,
+          "returned_total_sessions": 6975,
+          "ground_truth_table_count": 6975,
+          "missing_records_count": 0,
+          "truncation_error_pct": 0.0,
+          "last_evaluated_key_returned": false,
+          "final_page_unfollowed_last_evaluated_key": false,
+          "dynamodb_operations": [
+            "GetItem"
+          ],
+          "sdk_api_calls": 1,
+          "scanned_count": 0,
+          "returned_item_count": 0,
+          "consumed_rcu": 0.5,
+          "latency_ms": 202.234,
+          "stats_source": null
+        },
+        {
+          "iteration": 3,
+          "returned_total_sessions": 6975,
+          "ground_truth_table_count": 6975,
+          "missing_records_count": 0,
+          "truncation_error_pct": 0.0,
+          "last_evaluated_key_returned": false,
+          "final_page_unfollowed_last_evaluated_key": false,
+          "dynamodb_operations": [
+            "GetItem"
+          ],
+          "sdk_api_calls": 1,
+          "scanned_count": 0,
+          "returned_item_count": 0,
+          "consumed_rcu": 0.5,
+          "latency_ms": 204.897,
+          "stats_source": null
+        },
+        {
+          "iteration": 4,
+          "returned_total_sessions": 6975,
+          "ground_truth_table_count": 6975,
+          "missing_records_count": 0,
+          "truncation_error_pct": 0.0,
+          "last_evaluated_key_returned": false,
+          "final_page_unfollowed_last_evaluated_key": false,
+          "dynamodb_operations": [
+            "GetItem"
+          ],
+          "sdk_api_calls": 1,
+          "scanned_count": 0,
+          "returned_item_count": 0,
+          "consumed_rcu": 0.5,
+          "latency_ms": 132.211,
+          "stats_source": null
+        },
+        {
+          "iteration": 5,
+          "returned_total_sessions": 6975,
+          "ground_truth_table_count": 6975,
+          "missing_records_count": 0,
+          "truncation_error_pct": 0.0,
+          "last_evaluated_key_returned": false,
+          "final_page_unfollowed_last_evaluated_key": false,
+          "dynamodb_operations": [
+            "GetItem"
+          ],
+          "sdk_api_calls": 1,
+          "scanned_count": 0,
+          "returned_item_count": 0,
+          "consumed_rcu": 0.5,
+          "latency_ms": 175.215,
+          "stats_source": null
+        },
+        {
+          "iteration": 6,
+          "returned_total_sessions": 6975,
+          "ground_truth_table_count": 6975,
+          "missing_records_count": 0,
+          "truncation_error_pct": 0.0,
+          "last_evaluated_key_returned": false,
+          "final_page_unfollowed_last_evaluated_key": false,
+          "dynamodb_operations": [
+            "GetItem"
+          ],
+          "sdk_api_calls": 1,
+          "scanned_count": 0,
+          "returned_item_count": 0,
+          "consumed_rcu": 0.5,
+          "latency_ms": 204.573,
+          "stats_source": null
+        },
+        {
+          "iteration": 7,
+          "returned_total_sessions": 6975,
+          "ground_truth_table_count": 6975,
+          "missing_records_count": 0,
+          "truncation_error_pct": 0.0,
+          "last_evaluated_key_returned": false,
+          "final_page_unfollowed_last_evaluated_key": false,
+          "dynamodb_operations": [
+            "GetItem"
+          ],
+          "sdk_api_calls": 1,
+          "scanned_count": 0,
+          "returned_item_count": 0,
+          "consumed_rcu": 0.5,
+          "latency_ms": 204.785,
+          "stats_source": null
+        },
+        {
+          "iteration": 8,
+          "returned_total_sessions": 6975,
+          "ground_truth_table_count": 6975,
+          "missing_records_count": 0,
+          "truncation_error_pct": 0.0,
+          "last_evaluated_key_returned": false,
+          "final_page_unfollowed_last_evaluated_key": false,
+          "dynamodb_operations": [
+            "GetItem"
+          ],
+          "sdk_api_calls": 1,
+          "scanned_count": 0,
+          "returned_item_count": 0,
+          "consumed_rcu": 0.5,
+          "latency_ms": 204.931,
+          "stats_source": null
+        },
+        {
+          "iteration": 9,
+          "returned_total_sessions": 6975,
+          "ground_truth_table_count": 6975,
+          "missing_records_count": 0,
+          "truncation_error_pct": 0.0,
+          "last_evaluated_key_returned": false,
+          "final_page_unfollowed_last_evaluated_key": false,
+          "dynamodb_operations": [
+            "GetItem"
+          ],
+          "sdk_api_calls": 1,
+          "scanned_count": 0,
+          "returned_item_count": 0,
+          "consumed_rcu": 0.5,
+          "latency_ms": 204.566,
+          "stats_source": null
+        },
+        {
+          "iteration": 10,
+          "returned_total_sessions": 6975,
+          "ground_truth_table_count": 6975,
+          "missing_records_count": 0,
+          "truncation_error_pct": 0.0,
+          "last_evaluated_key_returned": false,
+          "final_page_unfollowed_last_evaluated_key": false,
+          "dynamodb_operations": [
+            "GetItem"
+          ],
+          "sdk_api_calls": 1,
+          "scanned_count": 0,
+          "returned_item_count": 0,
+          "consumed_rcu": 0.5,
+          "latency_ms": 204.663,
+          "stats_source": null
+        }
+      ],
+      "summary": {
+        "ground_truth_count": 6975,
+        "returned_sessions_min": 6975,
+        "returned_sessions_max": 6975,
+        "returned_sessions_mean": 6975.0,
+        "missing_records_mean": 0.0,
+        "truncation_error_pct_mean": 0.0,
+        "last_evaluated_key_present_calls": 0,
+        "unfollowed_last_evaluated_key_calls": 0,
+        "scanned_count_per_call_mean": 0.0,
+        "scanned_count_total_all_calls": 0,
+        "consumed_rcu_per_call_mean": 0.5,
+        "consumed_rcu_per_call_p50": 0.5,
+        "consumed_rcu_total_all_calls": 5.0,
+        "read_latency_ms": {
+          "min": 132.211,
+          "mean": 235.089,
+          "p50": 204.618,
+          "p95": 429.266,
+          "p99": 576.104,
+          "max": 612.813
+        }
+      }
+    }
+  },
+  "axis_2_jitter_and_false_success": {
+    "jitter_config": {
+      "attempts": 10,
+      "jitter_min_ms": 700.0,
+      "jitter_max_ms": 900.0,
+      "client_connect_timeout_sec": 2.0,
+      "client_read_timeout_sec": 5.0,
+      "client_retries": {
+        "total_max_attempts": 3,
+        "mode": "standard"
+      }
+    },
+    "attempts_detail": [
+      {
+        "attempt": 1,
+        "session_id": "bench-v2-after-855c23c9-jitter-01",
+        "returned_status": "recorded",
+        "returned_error": null,
+        "latency_ms": 1526.433,
+        "sdk_http_attempts": 1,
+        "injected_jitter_ms": [
+          864.78
+        ],
+        "buffered_in_local_store": false,
+        "confirmed_in_aws_dynamodb": true
+      },
+      {
+        "attempt": 2,
+        "session_id": "bench-v2-after-855c23c9-jitter-02",
+        "returned_status": "recorded",
+        "returned_error": null,
+        "latency_ms": 1023.492,
+        "sdk_http_attempts": 1,
+        "injected_jitter_ms": [
+          835.06
+        ],
+        "buffered_in_local_store": false,
+        "confirmed_in_aws_dynamodb": true
+      },
+      {
+        "attempt": 3,
+        "session_id": "bench-v2-after-855c23c9-jitter-03",
+        "returned_status": "recorded",
+        "returned_error": null,
+        "latency_ms": 921.702,
+        "sdk_http_attempts": 1,
+        "injected_jitter_ms": [
+          700.68
+        ],
+        "buffered_in_local_store": false,
+        "confirmed_in_aws_dynamodb": true
+      },
+      {
+        "attempt": 4,
+        "session_id": "bench-v2-after-855c23c9-jitter-04",
+        "returned_status": "recorded",
+        "returned_error": null,
+        "latency_ms": 1025.086,
+        "sdk_http_attempts": 1,
+        "injected_jitter_ms": [
+          834.42
+        ],
+        "buffered_in_local_store": false,
+        "confirmed_in_aws_dynamodb": true
+      },
+      {
+        "attempt": 5,
+        "session_id": "bench-v2-after-855c23c9-jitter-05",
+        "returned_status": "recorded",
+        "returned_error": null,
+        "latency_ms": 1023.243,
+        "sdk_http_attempts": 1,
+        "injected_jitter_ms": [
+          838.31
+        ],
+        "buffered_in_local_store": false,
+        "confirmed_in_aws_dynamodb": true
+      },
+      {
+        "attempt": 6,
+        "session_id": "bench-v2-after-855c23c9-jitter-06",
+        "returned_status": "recorded",
+        "returned_error": null,
+        "latency_ms": 921.293,
+        "sdk_http_attempts": 1,
+        "injected_jitter_ms": [
+          727.56
+        ],
+        "buffered_in_local_store": false,
+        "confirmed_in_aws_dynamodb": true
+      },
+      {
+        "attempt": 7,
+        "session_id": "bench-v2-after-855c23c9-jitter-07",
+        "returned_status": "recorded",
+        "returned_error": null,
+        "latency_ms": 1024.197,
+        "sdk_http_attempts": 1,
+        "injected_jitter_ms": [
+          821.22
+        ],
+        "buffered_in_local_store": false,
+        "confirmed_in_aws_dynamodb": true
+      },
+      {
+        "attempt": 8,
+        "session_id": "bench-v2-after-855c23c9-jitter-08",
+        "returned_status": "recorded",
+        "returned_error": null,
+        "latency_ms": 1023.893,
+        "sdk_http_attempts": 1,
+        "injected_jitter_ms": [
+          797.92
+        ],
+        "buffered_in_local_store": false,
+        "confirmed_in_aws_dynamodb": true
+      },
+      {
+        "attempt": 9,
+        "session_id": "bench-v2-after-855c23c9-jitter-09",
+        "returned_status": "recorded",
+        "returned_error": null,
+        "latency_ms": 921.59,
+        "sdk_http_attempts": 1,
+        "injected_jitter_ms": [
+          732.54
+        ],
+        "buffered_in_local_store": false,
+        "confirmed_in_aws_dynamodb": true
+      },
+      {
+        "attempt": 10,
+        "session_id": "bench-v2-after-855c23c9-jitter-10",
+        "returned_status": "recorded",
+        "returned_error": null,
+        "latency_ms": 977.396,
+        "sdk_http_attempts": 1,
+        "injected_jitter_ms": [
+          787.66
+        ],
+        "buffered_in_local_store": false,
+        "confirmed_in_aws_dynamodb": true
+      }
+    ],
+    "summary": {
+      "total_attempts": 10,
+      "returned_recorded_count": 10,
+      "returned_local_fallback_count": 0,
+      "confirmed_in_aws_dynamodb_count": 10,
+      "local_store_count_before_restart": 0,
+      "local_store_count_after_restart": 0,
+      "silently_lost_records_on_restart": 0,
+      "silent_data_loss_rate_pct": 0.0
+    },
+    "orchestrator_trace_audit": {
+      "session_id": "6b923626-661a-49ff-ba47-899b4f1bc10a",
+      "dynamo_receipt_status": "recorded",
+      "dynamo_receipt_error": null,
+      "swarm_trace_aws_dynamodb": {
+        "agent_name": "AWS_DynamoDB",
+        "action": "record_impact",
+        "duration_ms": 1327,
+        "status": "success"
+      },
+      "confirmed_in_aws_dynamodb": true,
+      "false_success_reported": false,
+      "orchestrator_injected_http_attempts": [
+        {
+          "injected_jitter_ms": 807.1,
+          "read_timeout_sec": 5.0,
+          "timed_out": false
+        }
+      ]
+    }
+  },
+  "axis_3_stack_and_iam_audit": {
+    "stack_name": "LuminaLab-Swarm-Stack",
+    "stack_status": "UPDATE_COMPLETE",
+    "stack_resource_type_counts": {
+      "AWS::KMS::Key": 1,
+      "AWS::SNS::Topic": 1,
+      "AWS::SNS::TopicPolicy": 1,
+      "AWS::Logs::LogGroup": 1,
+      "AWS::CloudWatch::Alarm": 4,
+      "AWS::DynamoDB::Table": 1,
+      "AWS::IAM::ManagedPolicy": 1,
+      "AWS::S3::Bucket": 1
+    },
+    "stack_resources": [
+      {
+        "logical_id": "LuminaLabAlertsKmsKey",
+        "resource_type": "AWS::KMS::Key",
+        "status": "CREATE_COMPLETE",
+        "physical_id": "fd084b16-1118-4b77-8171-3450e656db1b"
+      },
+      {
+        "logical_id": "LuminaLabAlertsTopic",
+        "resource_type": "AWS::SNS::Topic",
+        "status": "CREATE_COMPLETE",
+        "physical_id": "arn:aws:sns:us-east-1:<REDACTED_ACCOUNT_ID>:LuminaLab-Swarm-Stack-LuminaLabAlertsTopic-Z12l0DcZzeuP"
+      },
+      {
+        "logical_id": "LuminaLabAlertsTopicPolicy",
+        "resource_type": "AWS::SNS::TopicPolicy",
+        "status": "CREATE_COMPLETE",
+        "physical_id": "arn:aws:sns:us-east-1:<REDACTED_ACCOUNT_ID>:LuminaLab-Swarm-Stack-LuminaLabAlertsTopic-Z12l0DcZzeuP"
+      },
+      {
+        "logical_id": "LuminaLabAppLogGroup",
+        "resource_type": "AWS::Logs::LogGroup",
+        "status": "CREATE_COMPLETE",
+        "physical_id": "/aws/luminalab/LuminaLab-Swarm-Stack/application"
+      },
+      {
+        "logical_id": "LuminaLabDynamoFallbackAlarm",
+        "resource_type": "AWS::CloudWatch::Alarm",
+        "status": "CREATE_COMPLETE",
+        "physical_id": "LuminaLab-Swarm-Stack-LuminaLabDynamoFallbackAlarm-jrPxLjmyQ6FP"
+      },
+      {
+        "logical_id": "LuminaLabDynamoSystemErrorsAlarm",
+        "resource_type": "AWS::CloudWatch::Alarm",
+        "status": "CREATE_COMPLETE",
+        "physical_id": "LuminaLab-Swarm-Stack-LuminaLabDynamoSystemErrorsAlarm-NclH5DAMlYI6"
+      },
+      {
+        "logical_id": "LuminaLabDynamoThrottleAlarm",
+        "resource_type": "AWS::CloudWatch::Alarm",
+        "status": "CREATE_COMPLETE",
+        "physical_id": "LuminaLab-Swarm-Stack-LuminaLabDynamoThrottleAlarm-IhBbrCgu9S8Q"
+      },
+      {
+        "logical_id": "LuminaLabDynamoUserErrorsAlarm",
+        "resource_type": "AWS::CloudWatch::Alarm",
+        "status": "CREATE_COMPLETE",
+        "physical_id": "LuminaLab-Swarm-Stack-LuminaLabDynamoUserErrorsAlarm-QW04zKb0ux8b"
+      },
+      {
+        "logical_id": "LuminaLabImpactTable",
+        "resource_type": "AWS::DynamoDB::Table",
+        "status": "CREATE_COMPLETE",
+        "physical_id": "LuminaLab-Swarm-Stack-LuminaLabImpactTable-VT5UIOJUREZY"
+      },
+      {
+        "logical_id": "LuminaLabSwarmPolicy",
+        "resource_type": "AWS::IAM::ManagedPolicy",
+        "status": "UPDATE_COMPLETE",
+        "physical_id": "arn:aws:iam::<REDACTED_ACCOUNT_ID>:policy/LuminaLab-Swarm-Stack-LuminaLabSwarmPolicy-qPbQ1mwF65wD"
+      },
+      {
+        "logical_id": "LuminaLabVaultBucket",
+        "resource_type": "AWS::S3::Bucket",
+        "status": "CREATE_COMPLETE",
+        "physical_id": "luminalab-swarm-stack-luminalabvaultbucket-ffb2ptbmnlac"
+      }
+    ],
+    "observability_resources_in_stack": {
+      "cloudwatch_alarms_count": 4,
+      "cloudwatch_log_groups_count": 1,
+      "sns_topics_count": 1,
+      "cloudwatch_dashboards_count": 0
+    },
+    "cloudwatch_live_matching_alarms_count": 4,
+    "cloudwatch_live_matching_alarms": [
+      "LuminaLab-Swarm-Stack-LuminaLabDynamoFallbackAlarm-jrPxLjmyQ6FP",
+      "LuminaLab-Swarm-Stack-LuminaLabDynamoSystemErrorsAlarm-NclH5DAMlYI6",
+      "LuminaLab-Swarm-Stack-LuminaLabDynamoThrottleAlarm-IhBbrCgu9S8Q",
+      "LuminaLab-Swarm-Stack-LuminaLabDynamoUserErrorsAlarm-QW04zKb0ux8b"
+    ],
+    "iam_policy": {
+      "policy_arn": "arn:aws:iam::<REDACTED_ACCOUNT_ID>:policy/LuminaLab-Swarm-Stack-LuminaLabSwarmPolicy-qPbQ1mwF65wD",
+      "all_actions": [
+        "bedrock:InvokeModel",
+        "bedrock:InvokeModelWithResponseStream",
+        "cloudwatch:PutMetricData",
+        "dynamodb:GetItem",
+        "dynamodb:PutItem",
+        "dynamodb:UpdateItem",
+        "logs:CreateLogStream",
+        "logs:PutLogEvents",
+        "polly:DescribeVoices",
+        "polly:SynthesizeSpeech",
+        "s3:GetObject",
+        "s3:ListBucket",
+        "s3:PutObject"
+      ],
+      "dynamodb_actions": [
+        "dynamodb:GetItem",
+        "dynamodb:PutItem",
+        "dynamodb:UpdateItem"
+      ],
+      "has_dynamodb_scan": false,
+      "statements": [
+        {
+          "Sid": "S3LabVaultAccess",
+          "Effect": "Allow",
+          "Action": [
+            "s3:PutObject",
+            "s3:GetObject",
+            "s3:ListBucket"
+          ],
+          "Resource": [
+            "arn:aws:s3:::luminalab-swarm-stack-luminalabvaultbucket-ffb2ptbmnlac",
+            "arn:aws:s3:::luminalab-swarm-stack-luminalabvaultbucket-ffb2ptbmnlac/*"
+          ]
+        },
+        {
+          "Sid": "DynamoImpactLedgerAccess",
+          "Effect": "Allow",
+          "Action": [
+            "dynamodb:PutItem",
+            "dynamodb:GetItem",
+            "dynamodb:UpdateItem"
+          ],
+          "Resource": [
+            "arn:aws:dynamodb:us-east-1:<REDACTED_ACCOUNT_ID>:table/LuminaLab-Swarm-Stack-LuminaLabImpactTable-VT5UIOJUREZY"
+          ]
+        },
+        {
+          "Sid": "AmazonPollySpeechAccess",
+          "Effect": "Allow",
+          "Action": [
+            "polly:SynthesizeSpeech",
+            "polly:DescribeVoices"
+          ],
+          "Resource": [
+            "*"
+          ]
+        },
+        {
+          "Sid": "BedrockInferenceAccess",
+          "Effect": "Allow",
+          "Action": [
+            "bedrock:InvokeModel",
+            "bedrock:InvokeModelWithResponseStream"
+          ],
+          "Resource": [
+            "*"
+          ]
+        },
+        {
+          "Sid": "CloudWatchLogsAccess",
+          "Effect": "Allow",
+          "Action": [
+            "logs:CreateLogStream",
+            "logs:PutLogEvents"
+          ],
+          "Resource": [
+            "arn:aws:logs:us-east-1:<REDACTED_ACCOUNT_ID>:log-group:/aws/luminalab/LuminaLab-Swarm-Stack/application:*"
+          ]
+        },
+        {
+          "Sid": "CloudWatchCustomMetricAccess",
+          "Effect": "Allow",
+          "Action": [
+            "cloudwatch:PutMetricData"
+          ],
+          "Resource": [
+            "*"
+          ]
+        }
+      ]
+    }
+  },
+  "axis_4_cleanup": {
+    "requested_dynamo_deletes": 6987,
+    "deleted_dynamo_items": 6987,
+    "deleted_s3_objects": [
+      "s3://luminalab-swarm-stack-luminalabvaultbucket-ffb2ptbmnlac/labs/6b923626-661a-49ff-ba47-899b4f1bc10a.html",
+      "s3://luminalab-swarm-stack-luminalabvaultbucket-ffb2ptbmnlac/audio/6b923626-661a-49ff-ba47-899b4f1bc10a.mp3"
+    ],
+    "post_cleanup_table_item_count": 0,
+    "cleanup_executed": true
+  },
+  "idempotency_probe": {
+    "session_id": "bench-v2-after-855c23c9-idempotency-probe-01",
+    "total_sessions_before": 0,
+    "receipt_1_status": "recorded",
+    "total_sessions_after_first": 1,
+    "delta_after_first": 1,
+    "receipt_2_status": "recorded",
+    "receipt_2_idempotent_duplicate": true,
+    "total_sessions_after_second": 1,
+    "delta_after_second": 0,
+    "dynamodb_item_count_for_session": 1,
+    "post_probe_cleanup_table_item_count": 0,
+    "idempotency_verified": true
+  }
+}

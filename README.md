@@ -13,7 +13,7 @@ Its cloud persistence and operational layer was audited live against the AWS Wel
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-323B4C?style=flat-square)](LICENSE)
 
 **Quick Navigation:** [At a Glance](#1-at-a-glance) | [For Hackathon Reviewers](#2-for-hackathon-reviewers) | [Reproduce It Yourself](#7-reproduce-it-yourself) | [Before Review](docs/war-review-before.md) | [After Review](docs/war-review-after.md) | [Comparison Report](results/comparison_report.md)
-**Submission Media:** [Demo Video (2:45 on YouTube)](https://youtu.be/bQHX7pYtOSk) | AWS Builder Center Article: `pending publication`
+**Submission Media:** [Demo Video (2:45 on YouTube)](https://youtu.be/bQHX7pYtOSk) | [AWS Builder Center Article](https://builder.aws.com/project/3MbSyJQNBNJkWZSow2z88fXgE0T/i-let-the-aws-well-architected-skill-review-luminalab-swarm-284-green-tests-hid-337percent-data-loss)
 
 ---
 
